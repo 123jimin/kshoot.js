@@ -1,1 +1,4 @@
 build/** linguist-generated
+
+*.ksh -linguist-detectable
+*.kson -linguist-detectable
