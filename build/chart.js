@@ -1,4 +1,8 @@
+import * as Kson from "./kson.js";
 export class Chart {
+    version = "0.6.0";
+    meta = Kson.createMetaInfo();
+    beat = Kson.createBeatInfo();
     constructor() { }
     /**
      * Reads the given KSH chart.
@@ -19,4 +23,3 @@ export class Chart {
         return new Chart();
     }
 }
-;

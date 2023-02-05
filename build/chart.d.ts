@@ -1,4 +1,8 @@
-export declare class Chart {
+import * as Kson from "./kson.js";
+export declare class Chart implements Kson.Kson {
+    version: string;
+    meta: Kson.MetaInfo;
+    beat: Kson.BeatInfo;
     constructor();
     /**
      * Reads the given KSH chart.

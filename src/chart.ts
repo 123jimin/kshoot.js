@@ -1,4 +1,10 @@
-export class Chart {
+import * as Kson from "./kson.js";
+
+export class Chart implements Kson.Kson {
+    version: string = "0.6.0";
+    meta: Kson.MetaInfo = Kson.createMetaInfo();
+    beat: Kson.BeatInfo = Kson.createBeatInfo();
+    
     constructor() {}
 
     /**
@@ -20,4 +26,4 @@ export class Chart {
     static parseKSON(chart_obj: string|object): Chart {
         return new Chart();
     }
-};
+}
