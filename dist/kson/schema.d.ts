@@ -299,12 +299,12 @@ export declare const Kson: z.ZodObject<{
         level: number;
         disp_bpm: string;
     };
-    version: string;
     beat: {
         bpm: [bigint, number][];
         time_sig: [bigint, [number, number]][];
         scroll_speed: (Type.GraphPoint | [bigint, [number, number] | Type.GraphValue, [number, number]])[];
     };
+    version: string;
     gauge: {
         total: number;
     };
@@ -335,12 +335,12 @@ export declare const Kson: z.ZodObject<{
         icon_filename?: string | undefined;
         information?: string | undefined;
     } | undefined;
-    version?: string | undefined;
     beat?: {
         bpm?: [bigint, number][] | undefined;
         time_sig?: [bigint, [number, number]][] | undefined;
         scroll_speed?: ([bigint, number | [number, number] | [number]] | [bigint, number | [number, number] | [number], [number, number] | undefined])[] | undefined;
     } | undefined;
+    version?: string | undefined;
     gauge?: {
         total?: number | undefined;
     } | undefined;

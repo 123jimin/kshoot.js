@@ -1,3 +1,4 @@
+import * as Ksh from "./ksh/index.js";
 import * as Kson from "./kson/index.js";
 
 export class Chart implements Kson.Kson {
@@ -30,6 +31,8 @@ export class Chart implements Kson.Kson {
      * @throws when the given string represents an invalid KSH chart
      */
     static parseKSH(chart_str: string): Chart {
+        const reader = Ksh.Reader.parse(chart_str);
+        // TODO
         return new Chart();
     }
 
