@@ -1,11 +1,27 @@
-import * as Kson from "./kson.js";
+import * as Kson from "./kson/index.js";
 
 export class Chart implements Kson.Kson {
-    version: string = "0.6.0";
-    meta: Kson.MetaInfo = Kson.createMetaInfo();
-    beat: Kson.BeatInfo = Kson.createBeatInfo();
-    
-    constructor() {}
+    version: string = Kson.VERSION;
+    meta: Kson.MetaInfo;
+    beat: Kson.BeatInfo;
+    gauge: Kson.GaugeInfo;
+    note: Kson.NoteInfo;
+    editor: Kson.EditorInfo;
+
+    /**
+     * Creates a chart object, optionally initialized to given KSON data.
+     * @param [kson] Initial KSON data (**this will be shallow-copied**)
+     */
+    constructor(kson?: Kson.Kson) {
+        if(!kson) kson = Kson.Schema.Kson.parse({});
+
+        this.version = kson.version;
+        this.meta = kson.meta;
+        this.beat = kson.beat;
+        this.gauge = kson.gauge;
+        this.note = kson.note;
+        this.editor = kson.editor;
+    }
 
     /**
      * Reads the given KSH chart.
@@ -24,6 +40,10 @@ export class Chart implements Kson.Kson {
      * @throws when the given argument represents an invalid KSON chart 
      */
     static parseKSON(chart_obj: string|object): Chart {
-        return new Chart();
+        if(typeof chart_obj === 'string') {
+            return this.parseKSON(JSON.parse(chart_obj));
+        } else {
+            return new Chart(Kson.Schema.Kson.parse(chart_obj));
+        }
     }
 }

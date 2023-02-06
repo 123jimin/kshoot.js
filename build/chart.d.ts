@@ -1,9 +1,16 @@
-import * as Kson from "./kson.js";
+import * as Kson from "./kson/index.js";
 export declare class Chart implements Kson.Kson {
     version: string;
     meta: Kson.MetaInfo;
     beat: Kson.BeatInfo;
-    constructor();
+    gauge: Kson.GaugeInfo;
+    note: Kson.NoteInfo;
+    editor: Kson.EditorInfo;
+    /**
+     * Creates a chart object, optionally initialized to given KSON data.
+     * @param [kson] Initial KSON data (**this will be shallow-copied**)
+     */
+    constructor(kson?: Kson.Kson);
     /**
      * Reads the given KSH chart.
      * @param chart_str a string representing the chart (with or without the BOM)

@@ -1,3 +1,3 @@
 export * from "./chart.js";
 export * as Ksh from "./ksh.js";
-export * as Kson from "./kson.js";
+export * as Kson from "./kson/index.js";

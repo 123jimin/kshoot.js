@@ -4,6 +4,7 @@
         "module": "ESNext",
         "declaration": true,
         "outDir": "build",
-        "strict": true
+        "strict": true,
+        "moduleResolution": "node"
     }
 }

@@ -6,6 +6,13 @@ Note that this library is focused on having a simple codebase with as little dep
 
 Therefore, while this library would be suitable for simple chart processing, for non-trivial data manipulation (such as chart editors), use this library and other data structure libraries together for better performance.
 
+## Dependencies
+```
+$ npm ls --prod --all
+kshoot@0.0.1
+`-- zod@3.20.2
+```
+
 ## Chart file specs
 
 - [KSH Chart File Format Specification](https://github.com/m4saka/ksm-chart-format-spec/blob/master/ksh_format.md)
