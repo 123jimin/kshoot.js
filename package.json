@@ -2,11 +2,11 @@
   "name": "kshoot",
   "version": "0.0.1",
   "description": "JavaScript/TypeScript library for reading KSH and KSON charts for K-Shoot Mania",
-  "main": "build/index.js",
-  "typings": "build/index.d.ts",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "clean": "rm -r build/",
+    "clean": "rm -r dist/",
     "build": "npx tsc",
     "lint": "npx eslint src/",
     "test": "npx mocha"

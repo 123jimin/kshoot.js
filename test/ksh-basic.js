@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises';
 import {assert} from 'chai';
 
-import {Chart} from "../build/index.js";
+import {Chart} from "../dist/index.js";
 
 const chart_cache = {};
 async function getChart(path) {
