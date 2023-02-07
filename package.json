@@ -8,6 +8,7 @@
   "scripts": {
     "clean": "rm -r dist/",
     "build": "npx tsc",
+    "watch": "npx tsc --watch",
     "lint": "npx eslint src/",
     "test": "npx mocha"
   },

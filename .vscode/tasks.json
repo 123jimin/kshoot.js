@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "watch",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated"
+            },
+            "isBackground": true,
+            "problemMatcher": "$tsc-watch"
+        }
+    ]
+}
