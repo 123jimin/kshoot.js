@@ -48,7 +48,7 @@ export default class Reader implements Chart {
     body: Measure[] = [];
     audio_effects: AudioEffectLine[] = [];
 
-    private constructor() {}
+    private constructor() { /* empty */ }
 
     private _curr_pulse = 0n;
     private _curr_pulses_per_measure = PULSES_PER_WHOLE;
