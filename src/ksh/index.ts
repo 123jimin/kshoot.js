@@ -5,7 +5,7 @@ export {default as Writer} from "./writer.js";
 import {default as Reader} from "./reader.js";
 
 /**
- * Parses the given KSH chart. This function is the alias for `ksh.Reader.parse`.
+ * Parses the given KSH chart. This function is the alias for {@link Reader.parse `ksh.Reader.parse`}.
  * 
  * This function only handles parsing, and the result object(`Chart`) contains
  * minimal information (measure/tick information) required to understand the chart.

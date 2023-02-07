@@ -7,6 +7,7 @@ export type Pulse = bigint;
 export type MeasureIdx = bigint;
 
 /* Top-level object */
+
 /**
  * The type representing a KSON object; this type is a strict subset of what the spec specifies.
  */
@@ -23,6 +24,9 @@ export interface Kson {
     compat?: CompatInfo;
     impl?: unknown;
 }
+
+/** Alias for {@link Kson|`kson.Kson`} */
+export type Chart = Kson;
 
 /* meta */
 export interface MetaInfo {

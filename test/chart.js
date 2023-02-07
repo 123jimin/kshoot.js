@@ -12,7 +12,18 @@ async function getChart(path) {
 describe('KSH', function() {
     it("is used to count notes from a chart", async function() {
         const chart = Chart.parseKSH(await getChart('testcase/1-nov.ksh'));
-        
+
+        assert.deepEqual(chart.meta, {
+            title: "Testcase 1 [NOV]",
+            artist: "1-NOV art HEXAGON",
+            chart_author: "1-NOV effect HEXAGON",
+            jacket_filename: ".jpg",
+            jacket_author: "1-NOV illust HEXAGON",
+            difficulty: 0,
+            level: 1,
+            disp_bpm: "120",
+        }, "metadata must be equal");
+
         for(const note of chart.notes) {
             ++note_count;
         }

@@ -9,10 +9,9 @@ export interface Measure {
     pulse: Pulse,
     /** Length of this measure, in pulses */
     length: Pulse,
-    /** Chart lines, where each chart line is grouped with accompanying comments and options */
+    /** Chart lines, where each chart line is grouped with accompanying options */
     lines: {
         pulse: Pulse;
-        comments: CommentLine[];
         options: OptionLine[];
         chart: ChartLine;
     }[];
@@ -34,6 +33,14 @@ export interface Chart {
 }
 
 export type Difficulty = 'light' | 'challenge' | 'extended' | 'infinite';
+export const difficultyToInt = (difficulty: Difficulty): number => {
+    switch(difficulty) {
+        case 'light': return 0;
+        case 'challenge': return 1;
+        case 'extended': return 2;
+        case 'infinite': return 3;
+    }
+};
 
 export enum NoteKind {
     Empty, Short, Long,

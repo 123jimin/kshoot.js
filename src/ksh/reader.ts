@@ -47,6 +47,7 @@ export default class Reader implements Chart {
     header: OptionLine[] = [];
     body: Measure[] = [];
     audio_effects: AudioEffectLine[] = [];
+    comments: [Pulse, CommentLine][] = [];
 
     private constructor() { /* empty */ }
 
@@ -95,7 +96,7 @@ export default class Reader implements Chart {
         this._curr_time_signature = [numerator, denominator];
     }
 
-    private _handleMeasure(chart_line_count: bigint, lines: Exclude<Line, BarLine>[]): (CommentLine|OptionLine)[] {
+    private _handleMeasure(chart_line_count: bigint, lines: Exclude<Line, BarLine>[]): OptionLine[] {
         if(chart_line_count === 0n) {
             chart_line_count = 1n;
             lines.push({
@@ -113,18 +114,16 @@ export default class Reader implements Chart {
             lines: [],
         };
 
-        const curr_line: {pulse: bigint, comments: CommentLine[], options: OptionLine[]} = {
-            pulse: this._curr_pulse,
-            comments: [],
-            options: [],
+        const curr_line: {pulse: bigint, options: OptionLine[]} = {
+            pulse: this._curr_pulse, options: [],
         };
 
-        const carryovers: (CommentLine|OptionLine)[] = [];
+        const carryovers: OptionLine[] = [];
 
         for(const line of lines) {
             switch(line.type) {
                 case 'comment':
-                    curr_line.comments.push(line);
+                    this.comments.push([curr_line.pulse, line]);
                     break;
                 case 'option':
                     curr_line.options.push(line);
@@ -141,12 +140,10 @@ export default class Reader implements Chart {
                 case 'chart':
                     measure.lines.push({
                         pulse: curr_line.pulse,
-                        comments: curr_line.comments,
                         options: curr_line.options,
                         chart: line,
                     });
 
-                    curr_line.comments = [];
                     curr_line.options = [];
 
                     if(measure.length % chart_line_count !== 0n) {
@@ -168,7 +165,6 @@ export default class Reader implements Chart {
         this._curr_pulse = curr_line.pulse;
         this.body.push(measure);
 
-        for(const comment of curr_line.comments) carryovers.push(comment);
         for(const option of curr_line.options) carryovers.push(option);
 
         return carryovers;
@@ -253,7 +249,7 @@ export default class Reader implements Chart {
      * @returns parsed line
      */
     static parseLine(line: string): Line | ChartLineWithLegacyFX {
-        line = line.replace(/[\r\n\uFEFF]/g, '');
+        line = line.replace(/^\uFEFF|[\r\n]+$/g, '');
         
         if(line.startsWith("//")) {
             return {type: 'comment', value: line.slice(2)};

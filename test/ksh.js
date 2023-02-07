@@ -118,14 +118,28 @@ describe('ksh.Reader', function() {
                     ['type', 'Flanger'],
                     ['delay', '80samples'],
                     ['depth', '60samples'],
-                ]
-            }, "parsing first example by masaka");
+                ],
+            }, "parsing the first example by masaka");
+
+            assert.deepInclude(ksh.Reader.parseLine("#define_filter LOFL type=Flanger;delay=80samples-140samples;depth=0samples"), {
+                type: 'define_filter',
+                name: "LOFL",
+                params: [
+                    ['type', 'Flanger'],
+                    ['delay', '80samples-140samples'],
+                    ['depth', '0samples'],
+                ],
+            }, "parsing the second example by masaka")
+
         });
     });
 
     describe('.parse', function() {
-        it("should be able to parse simple chart", function() {
+        it("should be able to parse simple empty chart", function() {
             const chart = ksh.parse(`\uFEFFtitle=test\n--\n0000|00|--\n--\n`);
+
+            assert.deepEqual(chart.unknown, {header: [], body: []}, "all lines have to be recognizable");
+            assert.deepEqual(chart.header, [{type: 'option', name: 'title', value: 'test'}], "the option line has to be read correctly");
         });
     });
 });

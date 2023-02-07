@@ -1,5 +1,6 @@
 import * as ksh from "./ksh/index.js";
 import * as kson from "./kson/index.js";
+import {default as ksh2kson} from "./convert-ksh-kson.js";
 
 export class Chart implements kson.Kson {
     version: string = kson.VERSION;
@@ -13,7 +14,7 @@ export class Chart implements kson.Kson {
      * Creates a chart object, optionally initialized to given KSON data.
      * @param [kson_obj] Initial KSON data (**this will be shallow-copied**)
      */
-    constructor(kson_obj?: kson.Kson) {
+    constructor(kson_obj?: Readonly<kson.Kson>) {
         if(!kson_obj) kson_obj = kson.schema.Kson.parse({});
 
         ({
@@ -34,8 +35,8 @@ export class Chart implements kson.Kson {
      */
     static parseKSH(chart_str: string): Chart {
         const ksh_chart = ksh.parse(chart_str);
-        // TODO
-        return new Chart();
+        const kson_chart = ksh2kson(ksh_chart);
+        return new Chart(kson_chart);
     }
 
     /**
