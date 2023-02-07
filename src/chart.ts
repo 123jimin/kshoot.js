@@ -33,7 +33,7 @@ export class Chart implements kson.Kson {
      * @throws when the given string represents an invalid KSH chart
      */
     static parseKSH(chart_str: string): Chart {
-        const reader = ksh.Reader.parse(chart_str);
+        const ksh_chart = ksh.parse(chart_str);
         // TODO
         return new Chart();
     }

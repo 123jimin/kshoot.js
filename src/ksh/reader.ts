@@ -207,6 +207,8 @@ export default class Reader implements Chart {
         let chunk: Exclude<Line, BarLine>[] = [];
         let lines_per_measure = 0n;
         for(const line_str of chart_str.split("\n")) {
+            if(/^\s*$/.test(line_str)) continue;
+
             const line = Reader.parseLine(line_str);
             if('legacy_fx' in line) {
                 for(let i=0; i<2; ++i) {
