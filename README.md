@@ -2,9 +2,11 @@
 
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania. This project supersedes [kson-js](https://github.com/123jimin/kson-js).
 
-Note that this library is focused on having a simple codebase with as little dependency as possible, and not (yet) on having good time complexity.
+Note that this library is focused on having a simple, intuitive codebase with little dependency,
+embracing extra costs and suboptimal time complexity (at least while this library is being made).
 
-Therefore, while this library would be suitable for simple chart processing, for non-trivial data manipulation (such as chart editors), use this library and other data structure libraries together for better performance.
+Extra costs caused by abstraction should be insignificant unless you want to process large amount of files at once, but suboptimal time complexity may impact you if you're trying to edit the chart directly with this library.
+Therefore, for applications such as chart editors, use other data structure libraries with this library for better performance.
 
 ## Dependencies
 ```
