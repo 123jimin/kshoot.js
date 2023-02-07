@@ -19,10 +19,4 @@ describe('KSH', function() {
 
         assert.equal(note_count, 96);
     });
-
-    describe('parse', function() {
-        it("should be ", function() {
-
-        })
-    });
 });

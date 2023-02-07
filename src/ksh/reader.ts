@@ -1,48 +1,54 @@
 import {
-    NoteKind, btToNoteKind, fxToNoteKind, LaserKind, toLaserKind,
-    Line, BarLine, CommentLine, OptionLine, ChartLine, AudioEffectLine, UnknownLine,
-    PULSES_PER_WHOLE,
-} from "./type.js";
+    PULSES_PER_WHOLE, NoteKind, type LaserKind,
+    btToNoteKind, fxToNoteKind, toLaserKind,
+} from "./types.js";
+
+import type {
+    Chart, Measure, Line, Pulse,
+    BarLine, CommentLine, OptionLine, ChartLine, AudioEffectLine, UnknownLine,
+    LaneSpin,
+} from "./types.js";
 
 import Writer from "./writer.js";
+
+interface ChartLineWithLegacyFX extends ChartLine {
+    legacy_fx: [string|null, string|null]
+}
 
 const parseTimeSignature = (time_signature: string): [number, number] => {
     const [numerator, denominator] = time_signature.split("/", 2);
     return [parseInt(numerator), parseInt(denominator)];
 };
 
-export interface Measure {
-    /** Time signature of this measure */
-    time_signature: [numerator: number ,denominator: number];
-    /** Starting time of this measure */
-    pulse: bigint,
-    /** Length of this measure, in pulses */
-    length: bigint,
-    /** Chart lines, where each chart line is grouped with accompanying comments and options */
-    lines: {
-        pulse: bigint;
-        comments: CommentLine[];
-        options: OptionLine[];
-        chart: ChartLine;
-    }[];
-}
+const parseOption = (chunk: string): [string, string] => {
+    const tokens = chunk.split('=');
+    return [tokens[0], tokens.slice(1).join('=')];
+};
+
+const parseSpinHead = (spin_head: string): Omit<LaneSpin, 'length'>|null => {
+    switch(spin_head) {
+        case '@(': return {type: 'normal', direction: 'left'};
+        case '@)': return {type: 'normal', direction: 'right'};
+        case '@<': return {type: 'half', direction: 'left'};
+        case '@>': return {type: 'half', direction: 'right'};
+        case 'S<': return {type: 'swing', direction: 'left'};
+        case 'S>': return {type: 'swing', direction: 'right'};
+        default: return null;
+    }
+};
 
 /**
  * A class for reading KSH chart data
  */
-export default class Reader {
-    /** Unrecognized lines */
-    unknown: {
-        header: OptionLine[],
-        body: [pulse: bigint, line: OptionLine|UnknownLine][],
-    } = { header: [], body: []};
+export default class Reader implements Chart {
+    unknown: { header: OptionLine[], body: [Pulse, OptionLine|UnknownLine][] }
+        = { header: [], body: [] };
 
-    /** Header options for this chart */
     header: OptionLine[] = [];
-    /** Body of this chart, grouped by measures */
     body: Measure[] = [];
-    /** Audio effects defined in this chart */
     audio_effects: AudioEffectLine[] = [];
+
+    private constructor() {}
 
     private _curr_pulse = 0n;
     private _curr_pulses_per_measure = PULSES_PER_WHOLE;
@@ -188,12 +194,13 @@ export default class Reader {
     }
 
     /**
-     * Parses the given KSH chart.
+     * Parses the given KSH chart. Check `ksh.parse` for further details.
+     * 
      * @param chart_str a string representing the chart (with or without the BOM)
-     * @returns Parsed data
+     * @returns parsed data
      * @throws when the chart is malformed
      */
-    static parse(chart_str: string): Readonly<Reader> {
+    static parse(chart_str: string): Readonly<Chart> {
         const reader = new Reader();
 
         let is_header = true;
@@ -201,6 +208,18 @@ export default class Reader {
         let lines_per_measure = 0n;
         for(const line_str of chart_str.split("\n")) {
             const line = Reader.parseLine(line_str);
+            if('legacy_fx' in line) {
+                for(let i=0; i<2; ++i) {
+                    const legacy_fx = line.legacy_fx[i];
+                    if(legacy_fx == null) continue;
+
+                    chunk.push({
+                        type: 'option',
+                        name: ["fx-l", "fx-r"][i],
+                        value: legacy_fx,
+                    });
+                }
+            }
 
             if(line.type === 'bar') {
                 if(is_header) chunk = reader._handleHeader(chunk);
@@ -218,18 +237,20 @@ export default class Reader {
             chunk.push(line);
         }
 
-        if(is_header) reader._handleHeader(chunk);
-        else reader._handleMeasure(lines_per_measure, chunk);
+        if(chunk.length > 0) {
+            if(is_header) reader._handleHeader(chunk);
+            else reader._handleMeasure(lines_per_measure, chunk);
+        }
 
         return reader;
     }
 
     /**
      * Parses one line from the KSH chart.
-     * @param line One line from a chart
-     * @returns Parsed line
+     * @param line a line from a chart
+     * @returns parsed line
      */
-    static parseLine(line: string): Line {
+    static parseLine(line: string): Line | ChartLineWithLegacyFX {
         line = line.replace(/[\r\n\uFEFF]/g, '');
         
         if(line.startsWith("//")) {
@@ -245,7 +266,7 @@ export default class Reader {
             return {
                 type: match[1] as ('define_fx'|'define_filter'),
                 name: match[2],
-                params: match[3].split(';').map((param) => param.split('=', 2) as [string, string]),
+                params: match[3].split(';').map((param) => parseOption(param)),
             };
         }
         
@@ -260,26 +281,30 @@ export default class Reader {
             }) as [NoteKind, NoteKind];
             const laser = match[3].split('').map(toLaserKind) as [LaserKind, LaserKind];
 
-            const line: ChartLine = {
+            let line: ChartLine|ChartLineWithLegacyFX = {
                 type: 'chart', bt, fx, laser
             };
 
             if(legacy_fx[0] != null || legacy_fx[1] != null) {
-                line.legacy_fx = legacy_fx;
+                line = Object.assign(line, {legacy_fx});
             }
 
             if(match[4] && match[5]) {
-                line.spin = {
-                    type: match[4] as '@(' | '@)' | '@<' | '@>' | 'S<' | 'S>',
-                    length: parseInt(match[5]),
-                };
+                const spin_head = parseSpinHead(match[4]);
+
+                if(spin_head) {
+                    line.spin = {
+                        ...spin_head,
+                        length: parseInt(match[5]),
+                    };
+                }
             }
 
             return line;
         }
 
         if(line.includes('=')) {
-            const [option_name, option_value] = line.split('=', 2);
+            const [option_name, option_value] = parseOption(line);
             return {type: 'option', name: option_name, value: option_value};
         }
 

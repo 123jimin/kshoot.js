@@ -1,7 +1,7 @@
 import {
     toLaserChar,
     Line, BarLine, CommentLine, OptionLine, ChartLine, AudioEffectLine, UnknownLine, 
-} from "./type.js";
+} from "./types.js";
 
 /**
  * A class for writing KSH chart data

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import * as Type from "./type.js";
+import { VERSION } from "./types.js";
+import type * as types from "./types.js";
 
 export const Pulse = z.coerce.bigint();
 export const MeasureIdx = z.coerce.bigint();
@@ -15,15 +16,15 @@ function ByMeasureIdx<T extends z.ZodTypeAny>(schema: T) {
 }
 
 export const GraphValue = z.union([
-    z.coerce.number().finite().transform<Type.GraphValue>((v) => [v, v]),
-    z.tuple([z.coerce.number().finite()]).transform<Type.GraphValue>(([v]) => [v, v]),
+    z.coerce.number().finite().transform<types.GraphValue>((v) => [v, v]),
+    z.tuple([z.coerce.number().finite()]).transform<types.GraphValue>(([v]) => [v, v]),
     z.tuple([z.coerce.number().finite(), z.coerce.number().finite()]),
 ]);
 
 export const GraphCurveValue = z.tuple([z.coerce.number().finite(), z.coerce.number().finite()]).default([0, 0]);
 
 export const GraphPoint = z.union([
-    z.tuple([Pulse, GraphValue]).transform<Type.GraphPoint>(([y, v]) => [y, v, [0, 0]]),
+    z.tuple([Pulse, GraphValue]).transform<types.GraphPoint>(([y, v]) => [y, v, [0, 0]]),
     z.tuple([Pulse, GraphValue, GraphCurveValue])
 ]);
 
@@ -63,7 +64,7 @@ export const GaugeInfo = z.object({
 });
 
 /* note */
-export const ButtonNote = z.union([Pulse.transform<Type.ButtonNote>((y) => [y, 0n]), z.tuple([Pulse, Pulse])]);
+export const ButtonNote = z.union([Pulse.transform<types.ButtonNote>((y) => [y, 0n]), z.tuple([Pulse, Pulse])]);
 export const LaserSection = z.tuple([Pulse, GraphSectionPoint]);
 
 export const NoteInfo = z.object({
@@ -100,7 +101,7 @@ export const CompatInfo = z.object({
  * The zod schema for a KSON object.
  */
 export const Kson = z.object({
-    version: z.string().default(Type.VERSION),
+    version: z.string().default(VERSION),
     meta: MetaInfo.default({}),
     beat: BeatInfo.default({}),
     gauge: GaugeInfo.default({}),

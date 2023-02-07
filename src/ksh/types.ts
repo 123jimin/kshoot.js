@@ -1,5 +1,38 @@
 export const PULSES_PER_WHOLE = 192n;
 
+export type Pulse = bigint;
+
+export interface Measure {
+    /** Time signature of this measure */
+    time_signature: [numerator: number ,denominator: number];
+    /** Starting time of this measure */
+    pulse: Pulse,
+    /** Length of this measure, in pulses */
+    length: Pulse,
+    /** Chart lines, where each chart line is grouped with accompanying comments and options */
+    lines: {
+        pulse: Pulse;
+        comments: CommentLine[];
+        options: OptionLine[];
+        chart: ChartLine;
+    }[];
+}
+
+/** Parsed chart data; no further processing is done. */
+export interface Chart {
+    /** Unrecognized lines */
+    unknown: {
+        header: OptionLine[],
+        body: [pulse: Pulse, line: OptionLine|UnknownLine][],
+    };
+    /** Header options for this chart */
+    header: OptionLine[];
+    /** Body of this chart, grouped by measures */
+    body: Measure[];
+    /** Audio effects defined in this chart */
+    audio_effects: AudioEffectLine[];
+}
+
 export type Difficulty = 'light' | 'challenge' | 'extended' | 'infinite';
 
 export enum NoteKind {
@@ -71,14 +104,8 @@ export interface ChartLine {
     type: 'chart';
     bt: [NoteKind, NoteKind, NoteKind, NoteKind],
     fx: [NoteKind, NoteKind],
-    legacy_fx?: [string|null, string|null],
     laser: [LaserKind, LaserKind],
     spin?: LaneSpin,
-}
-
-export interface UnknownLine {
-    type: 'unknown';
-    value: string;
 }
 
 export interface AudioEffectLine {
@@ -87,11 +114,17 @@ export interface AudioEffectLine {
     params: [string, string][];
 }
 
+export interface UnknownLine {
+    type: 'unknown';
+    value: string;
+}
+
 /** Each line from a KSH chart, with minimally parsed data. */
 export type Line = BarLine | CommentLine | OptionLine | ChartLine | AudioEffectLine | UnknownLine;
 
 export interface LaneSpin {
-    type: '@(' | '@)' | '@<' | '@>' | 'S<' | 'S>';
+    type: 'normal' | 'half' | 'swing';
+    direction: 'left' | 'right';
     length: number;
 }
 

@@ -1,27 +1,29 @@
-import * as Ksh from "./ksh/index.js";
-import * as Kson from "./kson/index.js";
+import * as ksh from "./ksh/index.js";
+import * as kson from "./kson/index.js";
 
-export class Chart implements Kson.Kson {
-    version: string = Kson.VERSION;
-    meta: Kson.MetaInfo;
-    beat: Kson.BeatInfo;
-    gauge: Kson.GaugeInfo;
-    note: Kson.NoteInfo;
-    editor: Kson.EditorInfo;
+export class Chart implements kson.Kson {
+    version: string = kson.VERSION;
+    meta: kson.MetaInfo;
+    beat: kson.BeatInfo;
+    gauge: kson.GaugeInfo;
+    note: kson.NoteInfo;
+    editor: kson.EditorInfo;
 
     /**
      * Creates a chart object, optionally initialized to given KSON data.
-     * @param [kson] Initial KSON data (**this will be shallow-copied**)
+     * @param [kson_obj] Initial KSON data (**this will be shallow-copied**)
      */
-    constructor(kson?: Kson.Kson) {
-        if(!kson) kson = Kson.Schema.Kson.parse({});
+    constructor(kson_obj?: kson.Kson) {
+        if(!kson_obj) kson_obj = kson.schema.Kson.parse({});
 
-        this.version = kson.version;
-        this.meta = kson.meta;
-        this.beat = kson.beat;
-        this.gauge = kson.gauge;
-        this.note = kson.note;
-        this.editor = kson.editor;
+        ({
+            version: this.version,
+            meta: this.meta,
+            beat: this.beat,
+            gauge: this.gauge,
+            note: this.note,
+            editor: this.editor,
+        } = kson_obj);
     }
 
     /**
@@ -31,22 +33,19 @@ export class Chart implements Kson.Kson {
      * @throws when the given string represents an invalid KSH chart
      */
     static parseKSH(chart_str: string): Chart {
-        const reader = Ksh.Reader.parse(chart_str);
+        const reader = ksh.Reader.parse(chart_str);
         // TODO
         return new Chart();
     }
 
     /**
      * Reads the given KSON chart.
-     * @param chart_obj a string or an object representing the chart file
+     * @param chart_data a string or an object representing the chart file
      * @returns parsed chart data
      * @throws when the given argument represents an invalid KSON chart 
      */
-    static parseKSON(chart_obj: string|object): Chart {
-        if(typeof chart_obj === 'string') {
-            return this.parseKSON(JSON.parse(chart_obj));
-        } else {
-            return new Chart(Kson.Schema.Kson.parse(chart_obj));
-        }
+    static parseKSON(chart_data: string|object): Chart {
+        const chart_obj = (typeof chart_data === 'string' ? JSON.parse(chart_data) : chart_data);
+        return new Chart(kson.schema.Kson.parse(chart_obj));
     }
 }
