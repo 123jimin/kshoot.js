@@ -11,9 +11,8 @@ export interface Measure {
     length: Pulse,
     /** Chart lines, where each chart line is grouped with accompanying options */
     lines: {
-        pulse: Pulse;
-        options: OptionLine[];
         chart: ChartLine;
+        options: OptionLine[];
     }[];
 }
 
@@ -28,7 +27,7 @@ export interface Chart {
     /** Header options for this chart */
     header: OptionLine[];
     /** Body of this chart, grouped by measures */
-    body: Measure[];
+    measures: Measure[];
     /** Audio effects defined in this chart */
     audio_effects: AudioEffectLine[];
     comments: [pulse: Pulse, comment: CommentLine][];

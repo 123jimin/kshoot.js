@@ -46,7 +46,7 @@ export default class Reader implements Chart {
         = { header: [], body: [] };
 
     header: OptionLine[] = [];
-    body: Measure[] = [];
+    measures: Measure[] = [];
     audio_effects: AudioEffectLine[] = [];
     comments: [Pulse, CommentLine][] = [];
 
@@ -145,7 +145,6 @@ export default class Reader implements Chart {
                     break;
                 case 'chart':
                     measure.lines.push({
-                        pulse: curr_line.pulse,
                         options: curr_line.options,
                         chart: line,
                     });
@@ -169,7 +168,7 @@ export default class Reader implements Chart {
         }
 
         this._curr_pulse = curr_line.pulse;
-        this.body.push(measure);
+        this.measures.push(measure);
 
         for(const option of curr_line.options) carryovers.push(option);
 
@@ -190,7 +189,7 @@ export default class Reader implements Chart {
             default:
                 this.unknown.body.push([pulse, {
                     type: 'unknown',
-                    value: Writer.serialize(line),
+                    value: Writer.serializeLine(line),
                 }]);
         }
     }

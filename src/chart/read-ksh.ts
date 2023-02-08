@@ -107,28 +107,60 @@ class Converter {
         }
 
         type LastNote = kson.ButtonNote|null;
-        const last_note: [LastNote, LastNote, LastNote, LastNote, LastNote, LastNote] = [null, null, null, null, null, null];
+        const last_notes: [LastNote, LastNote, LastNote, LastNote, LastNote, LastNote] = [null, null, null, null, null, null];
         
         type LaserSection = [kson.Pulse, kson.GraphSectionPoint[], number];
         type LastLaserSection = LaserSection|null;
-        const last_laser: [LastLaserSection, LastLaserSection] = [null, null];
+        const last_lasers: [LastLaserSection, LastLaserSection] = [null, null];
 
         let measure_idx = 0n;
-        for(const measure of this.ksh_chart.body) {
+        for(const measure of this.ksh_chart.measures) {
             if(curr_time_sig[0] !== measure.time_signature[0] || curr_time_sig[1] !== measure.time_signature[1]) {
                 curr_time_sig = measure.time_signature;
                 this.chart.setTimeSignature(measure_idx, ...curr_time_sig);
             }
 
-            for(const {pulse, options, chart: chart_line} of measure.lines) {
+            let pulse = measure.pulse;
+            const pulses_per_line = measure.length / BigInt(measure.lines.length);
+
+            for(const {chart: chart_line, options} of measure.lines) {
                 for(const option of options) {
                     switch(option.name) {
+                        case 't': {
+                            const bpm = schema.bpm.parse(option.value);
+                            this.chart.setBPM(pulse, bpm);
+                            break;
+                        }
+                        case 'beat': break; // Ignored
                         default:
                             // TODO: add compat info
                     }
                 }
 
-                
+                loop_note: for(let i=0; i<6; ++i) {
+                    const kind = i<4 ? chart_line.bt[i] : chart_line.fx[i-4];
+                    const last_note = last_notes[i];
+                    if(kind === ksh.NoteKind.Long && last_note && last_note[0] + last_note[1] === pulse) {
+                        last_note[1] += pulses_per_line; 
+                        continue loop_note;
+                    }
+
+                    if(kind === ksh.NoteKind.Empty) {
+                        last_notes[i] = null;
+                        continue loop_note;
+                    }
+
+                    const next_note: [bigint, bigint] = [pulse, kind === ksh.NoteKind.Long ? pulses_per_line : 0n];
+
+                    this.chart.addButtonNote(i, next_note);
+                    last_notes[i] = next_note;
+                }
+
+                for(let i=0; i<2; ++i) {
+                    // TODO
+                }
+
+                pulse += pulses_per_line;
             }
 
             ++measure_idx;

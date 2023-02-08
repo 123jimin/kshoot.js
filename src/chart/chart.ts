@@ -81,6 +81,19 @@ export class Chart implements kson.Kson {
         addBySortKey(this.beat.time_sig, [measure_idx, [numerator, denominator]], true);
     }
 
+    addButtonNote(bt_or_fx_lane: number, note: kson.ButtonNote) {
+        if(bt_or_fx_lane < 4) this.addBTNote(bt_or_fx_lane, note);
+        else this.addFXNote(bt_or_fx_lane-4, note);
+    }
+
+    addBTNote(lane: number, note: kson.ButtonNote) {
+        addBySortKey(this.note.bt[lane], note, true);
+    }
+
+    addFXNote(lane: number, note: kson.ButtonNote) {
+        addBySortKey(this.note.fx[lane], note, true);
+    }
+
     /**
      * Set the chart data to given KSON object.
      * @param kson_obj the KSON object, or `null` for fully resetting the chart

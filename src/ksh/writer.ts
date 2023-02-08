@@ -1,19 +1,24 @@
 import {
     toLaserChar,
-    Line, BarLine, CommentLine, OptionLine, ChartLine, AudioEffectLine, UnknownLine, 
+    Line, BarLine, CommentLine, OptionLine, ChartLine, AudioEffectLine, UnknownLine,
+    LaneSpin,
 } from "./types.js";
 
 /**
  * A class for writing KSH chart data
  */
 export default class Writer {
-    static serialize(line: BarLine): string;
-    static serialize(line: CommentLine): string;
-    static serialize(line: OptionLine): string;
-    static serialize(line: ChartLine): string;
-    static serialize(line: UnknownLine): string;
-    static serialize(line: AudioEffectLine): string;
-    static serialize(line: Line): string {
+    static serializeLaneSpin(spin: LaneSpin): string {
+         // TODO: serialize spin
+         return '';
+    }
+    static serializeLine(line: BarLine): string;
+    static serializeLine(line: CommentLine): string;
+    static serializeLine(line: OptionLine): string;
+    static serializeLine(line: ChartLine): string;
+    static serializeLine(line: UnknownLine): string;
+    static serializeLine(line: AudioEffectLine): string;
+    static serializeLine(line: Line): string {
         switch(line.type) {
             case 'bar': return "--";
             case 'comment': return `//${line.value}`;
@@ -22,7 +27,8 @@ export default class Writer {
                 const bt = line.bt.map((x) => "012"[x]).join('');
                 const fx = line.fx.map((x) => "021"[x]).join('');
                 const laser = line.laser.map(toLaserChar).join('');
-                return `${bt}|${fx}|${laser}`;
+                const spin = line.spin ? Writer.serializeLaneSpin(line.spin) : '';
+                return `${bt}|${fx}|${laser}${spin}`;
             }
             case 'unknown': return `${line.value}`;
             case 'define_fx': case 'define_filter':
