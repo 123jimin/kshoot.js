@@ -19,6 +19,7 @@ export interface Measure {
 
 /** Parsed chart data; no further processing is done. */
 export interface Chart {
+    version: string;
     /** Unrecognized lines */
     unknown: {
         header: OptionLine[],
@@ -30,6 +31,7 @@ export interface Chart {
     body: Measure[];
     /** Audio effects defined in this chart */
     audio_effects: AudioEffectLine[];
+    comments: [pulse: Pulse, comment: CommentLine][];
 }
 
 export type Difficulty = 'light' | 'challenge' | 'extended' | 'infinite';

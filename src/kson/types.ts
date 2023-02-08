@@ -16,12 +16,12 @@ export interface Kson {
     version: string;
     meta: MetaInfo;
     beat: BeatInfo;
-    gauge: GaugeInfo;
+    gauge?: GaugeInfo;
     note: NoteInfo;
     audio?: AudioInfo;
     camera?: CameraInfo;
     bg?: BGInfo;
-    editor: EditorInfo;
+    editor?: EditorInfo;
     compat?: CompatInfo;
     impl?: unknown;
 }
@@ -72,12 +72,12 @@ export interface NoteInfo {
 export type ButtonNote = [ y: Pulse, length: Pulse ];
 export type ButtonNotes = Iterable<ButtonNote>;
 
-export type LaserSection = [ y: Pulse, v: GraphSectionPoint ];
+export type LaserSection = [ y: Pulse, v: Iterable<GraphSectionPoint>, w: number ];
 export type LaserSections = Iterable<LaserSection>;
 
 /* audio */
 export interface AudioInfo {
-    bgm?: BGMInfo;
+    bgm: BGMInfo;
     key_sound?: KeySoundInfo;
     audio_effect?: AudioEffectInfo;
 }
@@ -86,7 +86,7 @@ export interface BGMInfo {
     filename?: string;
     vol: number;
     offset: number;
-    preview?: BGMPreviewInfo;
+    preview: BGMPreviewInfo;
     legacy?: LegacyBGMInfo;
 }
 
@@ -107,7 +107,7 @@ export interface KeySoundFXInfo {
 }
 
 export interface KeySoundInvokeListFX {
-    [filename: string]: [Pulse|ByPulse<KeySoundInvokeFX>, Pulse|ByPulse<KeySoundInvokeFX>][];
+    [filename: string]: [(Pulse|ByPulse<KeySoundInvokeFX>)[], (Pulse|ByPulse<KeySoundInvokeFX>)[]];
 }
 
 export interface KeySoundInvokeFX {

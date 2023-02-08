@@ -41,6 +41,7 @@ const parseSpinHead = (spin_head: string): Omit<LaneSpin, 'length'>|null => {
  * A class for reading KSH chart data
  */
 export default class Reader implements Chart {
+    version = "";
     unknown: { header: OptionLine[], body: [Pulse, OptionLine|UnknownLine][] }
         = { header: [], body: [] };
 
@@ -65,6 +66,14 @@ export default class Reader implements Chart {
                     break;
                 case 'option':
                     this.header.push(line);
+                    switch(line.name) {
+                        case 'beat':
+                            this._setTimeSignature(...parseTimeSignature(line.value));
+                            break;
+                        case 'ver':
+                            this.version = line.value;
+                            break;
+                    }
                     break;
                 case 'define_fx':
                 case 'define_filter':
@@ -72,10 +81,6 @@ export default class Reader implements Chart {
                     break;
                 default:
                     this._addUnknown(true, 0n, line);
-            }
-
-            if(line.type === 'option' && line.name === 'beat') {
-                this._setTimeSignature(...parseTimeSignature(line.value));
             }
         }
 

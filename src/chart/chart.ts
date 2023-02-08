@@ -1,6 +1,6 @@
-import * as ksh from "./ksh/index.js";
-import * as kson from "./kson/index.js";
-import {default as ksh2kson} from "./convert-ksh.js";
+import * as ksh from "../ksh/index.js";
+import * as kson from "../kson/index.js";
+import {default as readKSH} from "./read-ksh.js";
 
 function addBySortKey<K, T>(arr: Iterable<[K, T]>, [time, obj]: [K, T], unique = false) {
     if(!Array.isArray(arr)) {
@@ -23,12 +23,15 @@ export class Chart implements kson.Kson {
     version: string = kson.VERSION;
     meta: kson.MetaInfo = kson.schema.MetaInfo.parse({});
     beat: kson.BeatInfo = kson.schema.BeatInfo.parse({});
-    gauge: kson.GaugeInfo = kson.schema.GaugeInfo.parse({});
+    private _gauge?: kson.GaugeInfo;
+    get gauge(): kson.GaugeInfo { return this._gauge ?? (this._gauge = kson.schema.GaugeInfo.parse({})); }
     note: kson.NoteInfo = kson.schema.NoteInfo.parse({});
-    audio?: kson.AudioInfo;
-    camera?: kson.CameraInfo;
-    bg?: kson.BGInfo;
-    editor: kson.EditorInfo = kson.schema.EditorInfo.parse({});
+    private _audio?: kson.AudioInfo;
+    get audio(): kson.AudioInfo { return this._audio ?? (this._audio = kson.schema.AudioInfo.parse({})); }
+    private _camera?: kson.CameraInfo;
+    private _bg?: kson.BGInfo;
+    private _editor?: kson.EditorInfo;
+    get editor(): kson.EditorInfo { return this._editor ?? (this._editor = kson.schema.EditorInfo.parse({})); }
     compat?: kson.CompatInfo;
     impl?: unknown;
 
@@ -89,14 +92,14 @@ export class Chart implements kson.Kson {
             version: this.version,
             meta: this.meta,
             beat: this.beat,
-            gauge: this.gauge,
             note: this.note,
-            editor: this.editor,
         } = kson_obj);
 
-        if(kson_obj.audio != null) this.audio = kson_obj.audio;
-        if(kson_obj.camera != null) this.camera = kson_obj.camera;
-        if(kson_obj.bg != null) this.bg = kson_obj.bg;
+        if(kson_obj.gauge != null) this._gauge = kson_obj.gauge;
+        if(kson_obj.audio != null) this._audio = kson_obj.audio;
+        if(kson_obj.camera != null) this._camera = kson_obj.camera;
+        if(kson_obj.bg != null) this._bg = kson_obj.bg;
+        if(kson_obj.editor != null) this._editor = kson_obj.editor;
         if(kson_obj.compat != null) this.compat = kson_obj.compat;
         if(kson_obj.impl != null) this.impl = kson_obj.impl;
     }
@@ -109,7 +112,7 @@ export class Chart implements kson.Kson {
      */
     static parseKSH(chart_str: string): Chart {
         const ksh_chart = ksh.parse(chart_str);
-        return ksh2kson(ksh_chart);
+        return readKSH(ksh_chart);
     }
 
     /**

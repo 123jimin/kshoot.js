@@ -34,6 +34,18 @@ describe('testcase/1-nov.ksh', function() {
         assert.deepStrictEqual(chart.gauge, {
             total: 0,
         }, "gauge must be equal");
+
+        assert.deepStrictEqual(chart.audio, {
+            bgm: {
+                filename: "01.ogg",
+                vol: 0.75,
+                offset: 8000,
+                preview: {
+                    offset: 0,
+                    duration: 15000,
+                },
+            },
+        }, "audio must be equal")
     });
 
     it("should have the correct auxillary info", function() {

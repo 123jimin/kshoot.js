@@ -65,7 +65,7 @@ export const GaugeInfo = z.object({
 
 /* note */
 export const ButtonNote = z.union([Pulse.transform<types.ButtonNote>((y) => [y, 0n]), z.tuple([Pulse, Pulse])]);
-export const LaserSection = z.tuple([Pulse, GraphSectionPoint]);
+export const LaserSection = z.tuple([Pulse, z.array(GraphSectionPoint), z.coerce.number().finite().positive().default(1)]);
 
 export const NoteInfo = z.object({
     bt: z.tuple([z.array(ButtonNote), z.array(ButtonNote), z.array(ButtonNote), z.array(ButtonNote)]).default([[], [], [], []]),
@@ -74,6 +74,49 @@ export const NoteInfo = z.object({
 });
 
 /* audio */
+export const BGMPreviewInfo = z.object({
+    offset: z.coerce.number().finite().nonnegative().default(0),
+    duration: z.coerce.number().finite().nonnegative().default(15000),
+});
+
+export const LegacyBGMInfo = z.object({
+    fp_filenames: z.array(z.string()),
+});
+
+export const BGMInfo = z.object({
+    filename: z.string().optional(),
+    vol: z.coerce.number().finite().nonnegative().default(1.0),
+    offset: z.coerce.number().finite().default(0),
+    preview: BGMPreviewInfo.default({}),
+    legacy: LegacyBGMInfo.optional(),
+});
+
+export const KeySoundInvokeFX = z.object({
+    vol: z.coerce.number().finite().nonnegative().default(1.0),
+});
+
+export const KeySoundInvokeListFX = z.record(z.string(), z.tuple([
+    z.array(z.union([Pulse, ByPulse(KeySoundInvokeFX)])),
+    z.array(z.union([Pulse, ByPulse(KeySoundInvokeFX)])),
+]));
+
+export const KeySoundFXInfo = z.object({
+    chip_event: KeySoundInvokeListFX.default({}),
+});
+export const KeySoundLaserInfo = z.object({});
+
+export const KeySoundInfo = z.object({
+    fx: KeySoundFXInfo.default({}),
+    laser: KeySoundLaserInfo.default({}),
+});
+
+export const AudioEffectInfo = z.object({});
+
+export const AudioInfo = z.object({
+    bgm: BGMInfo.default({}),
+    key_sound: KeySoundInfo.optional(),
+    audio_effect: AudioEffectInfo.optional(),
+});
 
 /* camera */
 
@@ -104,12 +147,12 @@ export const Kson = z.object({
     version: z.string().default(VERSION),
     meta: MetaInfo.default({}),
     beat: BeatInfo.default({}),
-    gauge: GaugeInfo.default({}),
+    gauge: GaugeInfo.optional(),
     note: NoteInfo.default({}),
-    audio: z.any(),
+    audio: AudioInfo.optional(),
     camera: z.any(),
     bg: z.any(),
-    editor: EditorInfo.default({}),
+    editor: EditorInfo.optional(),
     compat: CompatInfo.optional(),
     impl: z.any(),
 });
