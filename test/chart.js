@@ -1,19 +1,20 @@
 import * as fs from 'node:fs/promises';
 import {assert} from 'chai';
 
-import {Chart} from "../dist/index.js";
+import {kson, parse as parseChart} from "../dist/index.js";
 
-const chart_cache = {};
-async function getChart(path) {
-    if(path in chart_cache) return chart_cache[path];
-    return chart_cache[path] = await fs.readFile(new URL(`chart/${path}`, import.meta.url), 'utf-8');
-};
+const readChart = (file_name) => fs.readFile(new URL(`chart/${file_name}`, import.meta.url), 'utf-8');
 
-describe('KSH', function() {
-    it("is used to count notes from a chart", async function() {
-        const chart = Chart.parseKSH(await getChart('testcase/1-nov.ksh'));
+describe('testcase/1-nov.ksh', function() {
+    let chart_file = "";
+    let chart = null;
 
-        assert.deepEqual(chart.meta, {
+    before(async () => { chart_file = await readChart("testcase/1-nov.ksh"); chart = parseChart(chart_file) });
+
+    it("should have the correct metadata", function() {
+        assert.strictEqual(chart.version, kson.VERSION);
+
+        assert.deepStrictEqual(chart.meta, {
             title: "Testcase 1 [NOV]",
             artist: "1-NOV art HEXAGON",
             chart_author: "1-NOV effect HEXAGON",
@@ -22,12 +23,37 @@ describe('KSH', function() {
             difficulty: 0,
             level: 1,
             disp_bpm: "120",
-        }, "metadata must be equal");
+        }, "meta must be equal");
 
-        for(const note of chart.notes) {
-            ++note_count;
-        }
+        assert.deepStrictEqual(chart.beat, {
+            bpm: [[0n, 120]],
+            time_sig: [[0n, [4, 4]]],
+            scroll_speed: [[0n, [1, 1], [0, 0]]],
+        }, "beat must be equal");
 
-        assert.equal(note_count, 96);
+        assert.deepStrictEqual(chart.gauge, {
+            total: 0,
+        }, "gauge must be equal");
+    });
+
+    it("should have the correct auxillary info", function() {
+        assert.deepStrictEqual(chart.editor, {
+            comment: [],
+        }, "editor must be equal");
+
+        assert.deepStrictEqual(chart.compat, {
+            ksh_version: "171",
+            ksh_unknown: {
+                meta: {},
+                option: {},
+                line: [],
+            }
+        }, "compat must be equal");
+    });
+
+    it("should contain the correct amounts of notes", function() {
+        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [16, 16, 16, 16], "16 notes for each bt lane");
+        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [16, 16], "16 notes for each fx lane");
+        assert.deepStrictEqual(chart.note.laser, [[], []], "note.laser must be empty");
     });
 });

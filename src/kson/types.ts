@@ -2,6 +2,7 @@
 
 /** The latest version supported by this module */
 export const VERSION = "0.6.0";
+export const PULSES_PER_WHOLE = 960n;
 
 export type Pulse = bigint;
 export type MeasureIdx = bigint;

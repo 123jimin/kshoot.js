@@ -8,7 +8,12 @@ export class Chart implements kson.Kson {
     beat: kson.BeatInfo;
     gauge: kson.GaugeInfo;
     note: kson.NoteInfo;
+    audio?: kson.AudioInfo;
+    camera?: kson.CameraInfo;
+    bg?: kson.BGInfo;
     editor: kson.EditorInfo;
+    compat?: kson.CompatInfo;
+    impl?: unknown;
 
     /**
      * Creates a chart object, optionally initialized to given KSON data.
@@ -25,11 +30,17 @@ export class Chart implements kson.Kson {
             note: this.note,
             editor: this.editor,
         } = kson_obj);
+
+        if(kson_obj.audio != null) this.audio = kson_obj.audio;
+        if(kson_obj.camera != null) this.camera = kson_obj.camera;
+        if(kson_obj.bg != null) this.bg = kson_obj.bg;
+        if(kson_obj.compat != null) this.compat = kson_obj.compat;
+        if(kson_obj.impl != null) this.impl = kson_obj.impl;
     }
 
     /**
      * Reads the given KSH chart.
-     * @param chart_str a string representing the chart (with or without the BOM)
+     * @param chart_str a string representing the chart
      * @returns parsed chart data
      * @throws when the given string represents an invalid KSH chart
      */
@@ -46,7 +57,35 @@ export class Chart implements kson.Kson {
      * @throws when the given argument represents an invalid KSON chart 
      */
     static parseKSON(chart_data: string|object): Chart {
-        const chart_obj = (typeof chart_data === 'string' ? JSON.parse(chart_data) : chart_data);
+        const chart_obj = (typeof chart_data === 'string' ? JSON.parse(chart_data[0] === '\uFEFF' ? chart_data.slice(1) : chart_data) : chart_data);
         return new Chart(kson.schema.Kson.parse(chart_obj));
     }
 }
+
+/**
+ * Reads the given KSH or KSON chart.
+ * @param chart_str a string representing the chart (KSH or KSON)
+ * @returns parsed chart data
+ * @throws when the given string represents an invalid chart
+ */
+export const parse = (chart_str: string): Chart => {
+    if(/^\s*$/.test(chart_str)) {
+        return new Chart();
+    }
+
+    let chart_obj: object|null = null;
+
+    try {
+        // Use the fact that the top-level entity of a valid KSON chart must be an object.
+        if(chart_str[0] === '{') chart_obj = JSON.parse(chart_str);
+        else if(chart_str.startsWith("\uFEFF{")) chart_obj = JSON.parse(chart_str.slice(1));
+    } catch(_) { /* empty */ }
+
+    // Only try to parse as KSON, if the string is a valid JSON.
+    // It's actually impossible for a spec-conforming KSH chart to be a valid JSON.
+    if(chart_obj) {
+        return Chart.parseKSON(chart_obj);
+    }
+
+    return Chart.parseKSH(chart_str);
+};

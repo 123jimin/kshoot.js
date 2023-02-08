@@ -24,6 +24,7 @@ export class Converter implements kson.Chart {
     gauge: kson.GaugeInfo = kson.schema.GaugeInfo.parse({});
     note: kson.NoteInfo = kson.schema.NoteInfo.parse({});
     editor: kson.EditorInfo = kson.schema.EditorInfo.parse({});
+    compat: kson.CompatInfo = kson.schema.CompatInfo.parse({});
 
     private constructor() { /* empty */ }
 
@@ -79,8 +80,8 @@ export class Converter implements kson.Chart {
                 case 'pfilterdelay':
                 case 'v':
                 case 'vo':
-                case 'ver':
                     break;
+                case 'ver': this.compat.ksh_version = value; break;
                 case 'information': meta.information = value; break;
                 default:
                     // TODO: add compat info
