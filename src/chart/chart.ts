@@ -2,6 +2,9 @@ import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {default as readKSH} from "./read-ksh.js";
 
+export type Pulse = kson.Pulse;
+export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
+
 function addBySortKey<K, T>(arr: Iterable<[K, T]>, [time, obj]: [K, T], unique = false) {
     if(!Array.isArray(arr)) {
         throw new TypeError(`Currently only an array is supported via this function!`);
@@ -57,7 +60,7 @@ export class Chart implements kson.Kson {
      * @param pulse 
      * @param bpm 
      */
-    setBPM(pulse: kson.Pulse, bpm: number) {
+    setBPM(pulse: Pulse, bpm: number) {
         if(bpm <= 0) throw new RangeError(`Invalid BPM: ${bpm}!`);
 
         addBySortKey(this.beat.bpm, [pulse, bpm], true);
@@ -74,7 +77,7 @@ export class Chart implements kson.Kson {
         if(numerator <= 0 || !Number.isSafeInteger(numerator)) throw new RangeError(`Invalid numerator: ${numerator}!`);
         if(denominator <= 0 || !Number.isSafeInteger(denominator)) throw new RangeError(`Invalid denominator: ${denominator}!`);
 
-        if(kson.PULSES_PER_WHOLE % BigInt(denominator) !== 0n) {
+        if(PULSES_PER_WHOLE % BigInt(denominator) !== 0n) {
             throw new RangeError(`Invalid denominator: ${denominator}`);
         }
 
@@ -92,6 +95,10 @@ export class Chart implements kson.Kson {
 
     addFXNote(lane: number, note: kson.ButtonNote) {
         addBySortKey(this.note.fx[lane], note, true);
+    }
+
+    addComment(pulse: Pulse, comment: string) {
+        addBySortKey(this.editor.comment, [pulse, comment]);
     }
 
     /**

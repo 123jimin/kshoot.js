@@ -4,6 +4,7 @@ import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {Chart} from "./chart.js";
 
+const PULSE_MULTIPLIER = kson.PULSES_PER_WHOLE / ksh.PULSES_PER_WHOLE;
 type ConvertedChart = Chart & { compat: kson.CompatInfo };
 
 const schema = Object.freeze({
@@ -27,8 +28,9 @@ class Converter {
     
         this._convertUnknown();
         this._convertHeader();
-        this._convertBody();
+        this._convertMeasures();
         this._convertAudioEffects();
+        this._convertComments();
     }
 
     private _convertUnknown(): void {
@@ -100,7 +102,7 @@ class Converter {
         }
     }
 
-    private _convertBody(): void {
+    private _convertMeasures(): void {
         let curr_time_sig: [number, number] = [4, 4];
         for(const [_, time_sig] of this.chart.beat.time_sig) {
             curr_time_sig = time_sig; break;
@@ -120,8 +122,8 @@ class Converter {
                 this.chart.setTimeSignature(measure_idx, ...curr_time_sig);
             }
 
-            let pulse = measure.pulse;
-            const pulses_per_line = measure.length / BigInt(measure.lines.length);
+            let pulse = measure.pulse * PULSE_MULTIPLIER;
+            const pulses_per_line = (measure.length * PULSE_MULTIPLIER) / BigInt(measure.lines.length);
 
             for(const {chart: chart_line, options} of measure.lines) {
                 for(const option of options) {
@@ -169,6 +171,12 @@ class Converter {
 
     private _convertAudioEffects(): void {
         // TODO: add audio effects
+    }
+
+    private _convertComments(): void {
+        for(const [pulse, comment] of this.ksh_chart.comments) {
+            this.chart.addComment(pulse * PULSE_MULTIPLIER, comment.value);
+        }
     }
 }
 export default function(ksh_chart: ksh.Chart): ConvertedChart {
