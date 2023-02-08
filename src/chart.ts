@@ -1,17 +1,34 @@
 import * as ksh from "./ksh/index.js";
 import * as kson from "./kson/index.js";
-import {default as ksh2kson} from "./convert-ksh-kson.js";
+import {default as ksh2kson} from "./convert-ksh.js";
+
+function addBySortKey<K, T>(arr: Iterable<[K, T]>, [time, obj]: [K, T], unique = false) {
+    if(!Array.isArray(arr)) {
+        throw new TypeError(`Currently only an array is supported via this function!`);
+    }
+
+    // TODO: support adding at the beginning or in the middle of `arr`!
+    if(arr.length > 0 && time < arr[arr.length-1][0]) {
+        throw new Error("Not yet implemented!");
+    }
+
+    if(unique && arr.length > 0 && arr[arr.length-1][0] === time) {
+        arr[arr.length-1][1] = obj;
+    } else {
+        arr.push([time, obj]);
+    }
+}
 
 export class Chart implements kson.Kson {
     version: string = kson.VERSION;
-    meta: kson.MetaInfo;
-    beat: kson.BeatInfo;
-    gauge: kson.GaugeInfo;
-    note: kson.NoteInfo;
+    meta: kson.MetaInfo = kson.schema.MetaInfo.parse({});
+    beat: kson.BeatInfo = kson.schema.BeatInfo.parse({});
+    gauge: kson.GaugeInfo = kson.schema.GaugeInfo.parse({});
+    note: kson.NoteInfo = kson.schema.NoteInfo.parse({});
     audio?: kson.AudioInfo;
     camera?: kson.CameraInfo;
     bg?: kson.BGInfo;
-    editor: kson.EditorInfo;
+    editor: kson.EditorInfo = kson.schema.EditorInfo.parse({});
     compat?: kson.CompatInfo;
     impl?: unknown;
 
@@ -20,6 +37,52 @@ export class Chart implements kson.Kson {
      * @param [kson_obj] Initial KSON data (**this will be shallow-copied**)
      */
     constructor(kson_obj?: Readonly<kson.Kson>) {
+        if(kson_obj) this.setKSON(kson_obj);
+    }
+
+    /**
+     * Resets every chart data. Identical to calling {@link setKSON} with the `null` argument.
+     * It is recommended to create another chart object over using this function.
+     */
+    reset() {
+        this.setKSON(null);
+    }
+
+    /**
+     * Sets the BPM for the given pulse.
+     * TODO: fix addBySortKey
+     * @param pulse 
+     * @param bpm 
+     */
+    setBPM(pulse: kson.Pulse, bpm: number) {
+        if(bpm <= 0) throw new RangeError(`Invalid BPM: ${bpm}!`);
+
+        addBySortKey(this.beat.bpm, [pulse, bpm], true);
+    }
+
+    /**
+     * Sets the time signature from the given pulse.
+     * TODO: fix addBySortKey
+     * @param pulse 
+     * @param numerator 
+     * @param denominator 
+     */
+    setTimeSignature(measure_idx: kson.MeasureIdx, numerator: number, denominator: number) {
+        if(numerator <= 0 || !Number.isSafeInteger(numerator)) throw new RangeError(`Invalid numerator: ${numerator}!`);
+        if(denominator <= 0 || !Number.isSafeInteger(denominator)) throw new RangeError(`Invalid denominator: ${denominator}!`);
+
+        if(kson.PULSES_PER_WHOLE % BigInt(denominator) !== 0n) {
+            throw new RangeError(`Invalid denominator: ${denominator}`);
+        }
+
+        addBySortKey(this.beat.time_sig, [measure_idx, [numerator, denominator]], true);
+    }
+
+    /**
+     * Set the chart data to given KSON object.
+     * @param kson_obj the KSON object, or `null` for fully resetting the chart
+     */
+    setKSON(kson_obj: Readonly<kson.Kson>|null) {
         if(!kson_obj) kson_obj = kson.schema.Kson.parse({});
 
         ({
@@ -46,8 +109,7 @@ export class Chart implements kson.Kson {
      */
     static parseKSH(chart_str: string): Chart {
         const ksh_chart = ksh.parse(chart_str);
-        const kson_chart = ksh2kson(ksh_chart);
-        return new Chart(kson_chart);
+        return ksh2kson(ksh_chart);
     }
 
     /**

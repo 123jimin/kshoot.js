@@ -50,9 +50,9 @@ export interface MetaInfo {
 
 /* beat */
 export interface BeatInfo {
-    bpm: ByPulse<number>[];
-    time_sig: ByMeasureIdx<TimeSig>[];
-    scroll_speed: GraphPoint[];
+    bpm: Iterable<ByPulse<number>>;
+    time_sig: Iterable<ByMeasureIdx<TimeSig>>;
+    scroll_speed: Iterable<GraphPoint>;
 }
 
 export type TimeSig = [ numerator: number, denominator: number ];
@@ -64,14 +64,16 @@ export interface GaugeInfo {
 
 /* note */
 export interface NoteInfo {
-    bt: [ButtonNote[], ButtonNote[], ButtonNote[], ButtonNote[]];
-    fx: [ButtonNote[], ButtonNote[]];
-    laser: [LaserSection[], LaserSection[]];
+    bt: [ButtonNotes, ButtonNotes, ButtonNotes, ButtonNotes];
+    fx: [ButtonNotes, ButtonNotes];
+    laser: [LaserSections, LaserSections];
 }
 
 export type ButtonNote = [ y: Pulse, length: Pulse ];
+export type ButtonNotes = Iterable<ButtonNote>;
 
 export type LaserSection = [ y: Pulse, v: GraphSectionPoint ];
+export type LaserSections = Iterable<LaserSection>;
 
 /* audio */
 export interface AudioInfo {
@@ -130,7 +132,7 @@ export interface BGInfo {}
 
 /* editor */
 export interface EditorInfo {
-    comment: ByPulse<string>[];
+    comment: Iterable<ByPulse<string>>;
 }
 
 /* compat */
@@ -142,7 +144,7 @@ export interface CompatInfo {
 export interface KSHUnknownInfo {
     meta: {[name: string]: string};
     option: {[name: string]: ByPulse<string>};
-    line: ByPulse<string>[];
+    line: Iterable<ByPulse<string>>;
 }
 
 /* Common objects */

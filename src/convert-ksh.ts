@@ -2,14 +2,9 @@ import {z} from 'zod';
 
 import * as ksh from "./ksh/index.js";
 import * as kson from "./kson/index.js";
+import {Chart} from "./chart.js";
 
-function addByPulseArr<T>(arr: kson.ByPulse<T>[], [pulse, obj]: kson.ByPulse<T>, unique = false) {
-    if(unique && arr.length > 0 && arr[arr.length-1][0] === pulse) {
-        arr[arr.length-1][1] = obj;
-    } else {
-        arr.push([pulse, obj]);
-    }
-}
+type ConvertedChart = Chart & { compat: kson.CompatInfo };
 
 const schema = Object.freeze({
     difficulty: z.union([z.enum(['light', 'challenge', 'extended', 'infinite']).transform((v) => ksh.difficultyToInt(v)), z.string()]),
@@ -17,29 +12,22 @@ const schema = Object.freeze({
     bpm: z.coerce.number().finite().positive(),
 } as const);
 
-export class Converter implements kson.Chart {
-    version: string = kson.VERSION;
-    meta: kson.MetaInfo = kson.schema.MetaInfo.parse({});
-    beat: kson.BeatInfo = kson.schema.BeatInfo.parse({});
-    gauge: kson.GaugeInfo = kson.schema.GaugeInfo.parse({});
-    note: kson.NoteInfo = kson.schema.NoteInfo.parse({});
-    editor: kson.EditorInfo = kson.schema.EditorInfo.parse({});
-    compat: kson.CompatInfo = kson.schema.CompatInfo.parse({});
+class Converter {
+    readonly ksh_chart: ksh.Chart;
+    chart: ConvertedChart;
 
-    private constructor() { /* empty */ }
-
-    static convert(ksh_chart: ksh.Chart): Readonly<kson.Chart> {
-        const converter = new Converter();
-        converter._convert(ksh_chart);
-        return converter;
-    }
+    constructor(ksh_chart: ksh.Chart) {
+        this.ksh_chart = ksh_chart;
+        this.chart = new Chart(kson.schema.Kson.parse({
+            compat: kson.schema.CompatInfo.parse({}),
+        })) as ConvertedChart;
     
-    private _convert(ksh_chart: ksh.Chart) {
-        this._read_header(ksh_chart.header);
+        this._convertHeader();
     }
 
-    private _read_header(options: ksh.OptionLine[]) {
-        const meta = this.meta;
+    private _convertHeader(): void {
+        const options = this.ksh_chart.header;
+        const meta = this.chart.meta;
         for(const {name, value} of options) {
             switch(name) {
                 case 'title':  meta.title = value; break;
@@ -54,7 +42,7 @@ export class Converter implements kson.Chart {
                 case 't':
                     try {
                         const bpm = schema.bpm.parse(value);
-                        addByPulseArr(this.beat.bpm, [0n, bpm], true);
+                        this.chart.setBPM(0n, bpm);
                     } catch(_) { /* empty */ }
                     meta.disp_bpm = value;
                     break;
@@ -64,7 +52,11 @@ export class Converter implements kson.Chart {
                         meta.std_bpm = bpm;
                     } catch(_) { /* empty */ }
                     break;
-                case 'beat':
+                case 'beat': {
+                    const [numerator, denominator] = value.split('/').map((v) => parseInt(v));
+                    this.chart.setTimeSignature(0n, numerator, denominator);
+                    break;
+                }
                 case 'm':
                 case 'mvol':
                 case 'o':
@@ -81,7 +73,7 @@ export class Converter implements kson.Chart {
                 case 'v':
                 case 'vo':
                     break;
-                case 'ver': this.compat.ksh_version = value; break;
+                case 'ver': this.chart.compat.ksh_version = value; break;
                 case 'information': meta.information = value; break;
                 default:
                     // TODO: add compat info
@@ -89,7 +81,6 @@ export class Converter implements kson.Chart {
         }
     }
 }
-
-export default function convert(ksh_chart: ksh.Chart): kson.Kson {
-    return Converter.convert(ksh_chart);
+export default function convert(ksh_chart: ksh.Chart): ConvertedChart {
+    return (new Converter(ksh_chart)).chart;
 }

@@ -113,3 +113,5 @@ export const Kson = z.object({
     compat: CompatInfo.optional(),
     impl: z.any(),
 });
+
+export const Chart = Kson;

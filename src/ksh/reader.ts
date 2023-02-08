@@ -83,15 +83,16 @@ export default class Reader implements Chart {
     }
 
     private _setTimeSignature(numerator: number, denominator: number) {
-        if(numerator <= 0 || !Number.isFinite(numerator)) {
-            throw new Error(`Invalid time signature numerator: ${numerator}`);
+        if(numerator <= 0 || !Number.isSafeInteger(numerator)) {
+            throw new RangeError(`Invalid time signature numerator: ${numerator}`);
         }
-        if(denominator <= 0 || !Number.isFinite(denominator)) {
-            throw new Error(`Invalid time signature denominator: ${denominator}`);
+        if(denominator <= 0 || !Number.isSafeInteger(denominator)) {
+            throw new RangeError(`Invalid time signature denominator: ${denominator}`);
         }
         if(PULSES_PER_WHOLE % BigInt(denominator) !== 0n) {
-            throw new Error(`Invalid time signature denominator: ${denominator}`);
+            throw new RangeError(`Invalid time signature denominator: ${denominator}`);
         }
+        
         this._curr_pulses_per_measure = PULSES_PER_WHOLE / BigInt(denominator) * BigInt(numerator);
         this._curr_time_signature = [numerator, denominator];
     }
