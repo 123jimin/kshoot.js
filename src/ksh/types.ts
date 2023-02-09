@@ -91,8 +91,11 @@ export const fxToNoteKind = (ch: string): [NoteKind, string|null] => {
     }
 };
 
-/** number: pos (0 to 1), ':': connection */
+/** number: pos (0 to 50), ':': connection */
 export type LaserKind = number|':'|null;
+export const LASER_POS_MAX = 50;
+export const LASER_POS_WIDE_LEFT = 12;
+export const LASER_POS_WIDE_RIGHT = 37;
 
 export interface BarLine {
     type: 'bar';
@@ -142,14 +145,14 @@ export const LASER_CHAR_NONE = '-';
 export const LASER_CHAR_CONNECTION = ':';
 
 export const LASER_CHAR_TO_POS: Readonly<Record<string, number>> = Object.freeze(((mapping: Record<string, number>) => {
-    for(let i=0; i<LASER_POS_TO_CHAR.length; ++i) mapping[LASER_POS_TO_CHAR[i]] = i/50;
+    for(let i=0; i<LASER_POS_TO_CHAR.length; ++i) mapping[LASER_POS_TO_CHAR[i]] = i;
     return mapping;
 })({}));
 export const toLaserChar = (pos: LaserKind): string => {
     if(pos == null) return LASER_CHAR_NONE;
     if(pos === LASER_CHAR_CONNECTION) return pos;
     if(!Number.isFinite(pos)) throw new RangeError(`Invalid pos: ${pos}!`);
-    pos = Math.floor(pos * 51);
+    pos = Math.round(pos);
     if(pos <= 0) return LASER_POS_TO_CHAR[0];
     if(pos >= LASER_POS_TO_CHAR.length) return LASER_POS_TO_CHAR[LASER_POS_TO_CHAR.length-1];
     return LASER_POS_TO_CHAR[pos];

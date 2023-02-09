@@ -76,13 +76,17 @@ describe('ksh.Reader', function() {
             
             assert.deepInclude(ksh.Reader.parseLine("0000|00|-:"), {
                 type: 'chart', laser: [null, ':'],
-            }, "parsing simple line (laser only)");
+            }, "parsing simple line (laser only, special)");
+            
+            assert.deepInclude(ksh.Reader.parseLine("0000|00|AU"), {
+                type: 'chart', laser: [10, 30],
+            }, "parsing simple line (laser only, pos)");
             
             assert.deepInclude(ksh.Reader.parseLine("0120|21|0o"), {
                 type: 'chart',
                 bt: [ksh.NoteKind.Empty, ksh.NoteKind.Short, ksh.NoteKind.Long, ksh.NoteKind.Empty],
                 fx: [ksh.NoteKind.Short, ksh.NoteKind.Long],
-                laser: [0, 1],
+                laser: [0, 50],
             }, "parsing simple line");
             
             assert.deepInclude(ksh.Reader.parseLine("0000|FI|--"), {

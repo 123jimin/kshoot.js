@@ -111,8 +111,7 @@ class Converter {
         type LastNote = kson.ButtonNote|null;
         const last_notes: [LastNote, LastNote, LastNote, LastNote, LastNote, LastNote] = [null, null, null, null, null, null];
         
-        type LaserSection = [kson.Pulse, kson.GraphSectionPoint[], number];
-        type LastLaserSection = LaserSection|null;
+        type LastLaserSection = kson.LaserSection|null;
         const last_lasers: [LastLaserSection, LastLaserSection] = [null, null];
 
         let measure_idx = 0n;
@@ -142,8 +141,8 @@ class Converter {
                 loop_note: for(let i=0; i<6; ++i) {
                     const kind = i<4 ? (measure_line.bt ? measure_line.bt[i] : ksh.NoteKind.Empty) : (measure_line.fx ? measure_line.fx[i-4] : ksh.NoteKind.Empty);
                     const last_note = last_notes[i];
-                    if(kind === ksh.NoteKind.Long && last_note && last_note[0] + last_note[1] === pulse) {
-                        last_note[1] += pulses_per_line; 
+                    if(kind === ksh.NoteKind.Long && last_note && last_note[0] + last_note[1] >= pulse) {
+                        last_note[1] = pulse + pulses_per_line; 
                         continue loop_note;
                     }
 
@@ -158,8 +157,9 @@ class Converter {
                     last_notes[i] = next_note;
                 }
 
-                for(let i=0; i<2; ++i) {
-                    // TODO
+                loop_laser: for(let i=0; i<2; ++i) {
+                    const kind = (measure_line.laser ? measure_line.laser[i] : null);
+                    const last_laser = last_lasers[i];
                 }
 
                 pulse += pulses_per_line;
