@@ -5,13 +5,25 @@ import {PULSES_PER_WHOLE, kson, parse as parseChart} from "../dist/index.js";
 
 const readChart = (file_name) => fs.readFile(new URL(`chart/testcase/${file_name}`, import.meta.url), 'utf-8');
 
-describe('testcase/02-nov.ksh', function() {
-    let chart_file = "";
-    let chart = null;
+const TEST = (chart_name, callback) => {
+    describe(`testcase/${chart_name}`, function() {
+        const ctx = { file: "", chart: null };
+        before("chart load", async function() {
+            ctx.file = await readChart(chart_name);
+            ctx.chart = parseChart(ctx.file);
+        });
 
-    before(async () => { chart_file = await readChart("02-nov.ksh"); chart = parseChart(chart_file) });
+        callback.call(this, ctx);
+    });
+};
 
+TEST("01-nov.ksh", function(ctx) {
+});
+
+TEST("02-nov.ksh", function(ctx) {
     it("should have the correct metadata", function() {
+        const {chart} = ctx;
+
         assert.strictEqual(chart.version, kson.VERSION);
 
         assert.deepStrictEqual(chart.meta, {
@@ -49,6 +61,8 @@ describe('testcase/02-nov.ksh', function() {
     });
 
     it("should have the correct auxillary info", function() {
+        const {chart} = ctx;
+
         assert.deepStrictEqual(chart.editor, {
             comment: [],
         }, "editor must be equal");
@@ -64,8 +78,13 @@ describe('testcase/02-nov.ksh', function() {
     });
 
     it("should contain the correct amounts of notes", function() {
+        const {chart} = ctx;
+        
         assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [16, 16, 16, 16], "16 notes for each bt lane");
         assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [16, 16], "16 notes for each fx lane");
         assert.deepStrictEqual(chart.note.laser, [[], []], "note.laser must be empty");
     });
+});
+
+TEST("03-nov.ksh", function(ctx) {
 });
