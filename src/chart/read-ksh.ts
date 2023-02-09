@@ -125,8 +125,8 @@ class Converter {
             let pulse = measure.pulse * PULSE_MULTIPLIER;
             const pulses_per_line = (measure.length * PULSE_MULTIPLIER) / BigInt(measure.lines.length);
 
-            for(const {chart: chart_line, options} of measure.lines) {
-                for(const option of options) {
+            for(const measure_line of measure.lines) {
+                if(measure_line.options) for(const option of measure_line.options) {
                     switch(option.name) {
                         case 't': {
                             const bpm = schema.bpm.parse(option.value);
@@ -140,7 +140,7 @@ class Converter {
                 }
 
                 loop_note: for(let i=0; i<6; ++i) {
-                    const kind = i<4 ? chart_line.bt[i] : chart_line.fx[i-4];
+                    const kind = i<4 ? (measure_line.bt ? measure_line.bt[i] : ksh.NoteKind.Empty) : (measure_line.fx ? measure_line.fx[i-4] : ksh.NoteKind.Empty);
                     const last_note = last_notes[i];
                     if(kind === ksh.NoteKind.Long && last_note && last_note[0] + last_note[1] === pulse) {
                         last_note[1] += pulses_per_line; 

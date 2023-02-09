@@ -24,9 +24,9 @@ export default class Writer {
             case 'comment': return `//${line.value}`;
             case 'option': return `${line.name}=${line.value}`;
             case 'chart': {
-                const bt = line.bt.map((x) => "012"[x]).join('');
-                const fx = line.fx.map((x) => "021"[x]).join('');
-                const laser = line.laser.map(toLaserChar).join('');
+                const bt = line.bt ? line.bt.map((x) => "012"[x]).join('') : "0000";
+                const fx = line.fx ? line.fx.map((x) => "021"[x]).join('') : "00";
+                const laser = line.laser ? line.laser.map(toLaserChar).join('') : "--";
                 const spin = line.spin ? Writer.serializeLaneSpin(line.spin) : '';
                 return `${bt}|${fx}|${laser}${spin}`;
             }

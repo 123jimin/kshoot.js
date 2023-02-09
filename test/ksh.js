@@ -64,11 +64,20 @@ describe('ksh.Reader', function() {
         it("should be able to parse chart lines correctly", function() {
             assert.deepInclude(ksh.Reader.parseLine("0000|00|--"), {
                 type: 'chart',
-                bt: [ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty],
-                fx: [ksh.NoteKind.Empty, ksh.NoteKind.Empty],
-                laser: [null, null],
             }, "parsing empty line");
 
+            assert.deepInclude(ksh.Reader.parseLine("1201|00|--"), {
+                type: 'chart', bt: [ksh.NoteKind.Short, ksh.NoteKind.Long, ksh.NoteKind.Empty, ksh.NoteKind.Short],
+            }, "parsing simple line (BT only)");
+            
+            assert.deepInclude(ksh.Reader.parseLine("0000|10|0o"), {
+                type: 'chart', fx: [ksh.NoteKind.Long, ksh.NoteKind.Empty],
+            }, "parsing simple line (FX only)");
+            
+            assert.deepInclude(ksh.Reader.parseLine("0000|00|-:"), {
+                type: 'chart', laser: [null, ':'],
+            }, "parsing simple line (laser only)");
+            
             assert.deepInclude(ksh.Reader.parseLine("0120|21|0o"), {
                 type: 'chart',
                 bt: [ksh.NoteKind.Empty, ksh.NoteKind.Short, ksh.NoteKind.Long, ksh.NoteKind.Empty],
@@ -78,11 +87,15 @@ describe('ksh.Reader', function() {
             
             assert.deepInclude(ksh.Reader.parseLine("0000|FI|--"), {
                 type: 'chart',
-                bt: [ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty],
                 fx: [ksh.NoteKind.Long, ksh.NoteKind.Long],
-                laser: [null, null],
                 legacy_fx: ["Flanger", "Gate;16"],
             }, "parsing legacy FXs (Flanger and Gate16)");
+
+            assert.deepInclude(ksh.Reader.parseLine("0000|A1|--"), {
+                type: 'chart',
+                fx: [ksh.NoteKind.Long, ksh.NoteKind.Long],
+                legacy_fx: ["TapeStop", null],
+            }, "parsing legacy FXs (Stop)");
             
             for(const [test_in, test_out] of [
                 ["@(12", {type: 'normal', direction: 'left', length: 12}],
@@ -94,20 +107,9 @@ describe('ksh.Reader', function() {
             ]) {
                 assert.deepInclude(ksh.Reader.parseLine("0000|00|--" + test_in), {
                     type: 'chart',
-                    bt: [ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty],
-                    fx: [ksh.NoteKind.Empty, ksh.NoteKind.Empty],
-                    laser: [null, null],
                     spin: test_out,
                 }, "parsing spins");
             }
-
-            assert.deepInclude(ksh.Reader.parseLine("0000|A1|--"), {
-                type: 'chart',
-                bt: [ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty, ksh.NoteKind.Empty],
-                fx: [ksh.NoteKind.Long, ksh.NoteKind.Long],
-                laser: [null, null],
-                legacy_fx: ["TapeStop", null],
-            }, "parsing legacy FXs (Stop)");
         });
 
         it("should be able to parse audio effect definitions correctly", function() {
@@ -140,6 +142,11 @@ describe('ksh.Reader', function() {
 
             assert.deepEqual(chart.unknown, {header: [], body: []}, "all lines have to be recognizable");
             assert.deepEqual(chart.header, [{type: 'option', name: 'title', value: 'test'}], "the option line has to be read correctly");
+            assert.deepEqual(chart.measures, [{
+                time_signature: [4, 4],
+                pulse: 0n, length: 192n,
+                lines: [{}],
+            }], "there should be no note");
         });
     });
 });

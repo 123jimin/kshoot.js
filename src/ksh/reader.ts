@@ -4,7 +4,7 @@ import {
 } from "./types.js";
 
 import type {
-    Chart, Measure, Line, Pulse,
+    Chart, Measure, MeasureLine, Line, Pulse,
     BarLine, CommentLine, OptionLine, ChartLine, AudioEffectLine, UnknownLine,
     LaneSpin,
 } from "./types.js";
@@ -143,11 +143,14 @@ export default class Reader implements Chart {
                         }
                     }
                     break;
-                case 'chart':
-                    measure.lines.push({
-                        options: curr_line.options,
-                        chart: line,
-                    });
+                case 'chart': {
+                    const measure_line: MeasureLine = {};
+                    if('bt' in line) measure_line.bt = line.bt;
+                    if('fx' in line) measure_line.fx = line.fx;
+                    if('laser' in line) measure_line.laser = line.laser;
+                    if('spin' in line) measure_line.spin = line.spin;
+                    if(curr_line.options.length > 0) measure_line.options = curr_line.options;
+                    measure.lines.push(measure_line);
 
                     curr_line.options = [];
 
@@ -158,6 +161,7 @@ export default class Reader implements Chart {
                     curr_line.pulse += measure.length / chart_line_count;
 
                     break;
+                }
                 case 'define_fx':
                 case 'define_filter':
                     this.audio_effects.push(line);
@@ -255,6 +259,10 @@ export default class Reader implements Chart {
      */
     static parseLine(line: string): Line | ChartLineWithLegacyFX {
         line = line.replace(/^\uFEFF|[\r\n]+$/g, '');
+
+        if(line === "0000|00|--") {
+            return {type: 'chart'};
+        }
         
         if(line.startsWith("//")) {
             return {type: 'comment', value: line.slice(2)};
@@ -275,21 +283,28 @@ export default class Reader implements Chart {
         
         match = line.match(/^([012]{4})\|([012A-Z]{2})\|([0-9A-Za-o\-:]{2})(?:(@[()<>]|S[<>])(\d+))?$/);
         if(match) {
-            const bt = match[1].split('').map(btToNoteKind) as [NoteKind, NoteKind, NoteKind, NoteKind];
-            const legacy_fx: [string|null, string|null] = [null, null];
-            const fx = match[2].split('').map((x, ind) => {
-                const [note_kind, legacy] = fxToNoteKind(x);
-                legacy_fx[ind] = legacy;
-                return note_kind;
-            }) as [NoteKind, NoteKind];
-            const laser = match[3].split('').map(toLaserKind) as [LaserKind, LaserKind];
+            let line: ChartLine|ChartLineWithLegacyFX = {type: 'chart'};
 
-            let line: ChartLine|ChartLineWithLegacyFX = {
-                type: 'chart', bt, fx, laser
-            };
+            if(match[1] !== '0000') {
+                line.bt = match[1].split('').map(btToNoteKind) as [NoteKind, NoteKind, NoteKind, NoteKind];
+            }
 
-            if(legacy_fx[0] != null || legacy_fx[1] != null) {
-                line = Object.assign(line, {legacy_fx});
+            if(match[2] !== '00') {
+                const legacy_fx: [string|null, string|null] = [null, null];
+
+                line.fx = match[2].split('').map((x, ind) => {
+                    const [note_kind, legacy] = fxToNoteKind(x);
+                    legacy_fx[ind] = legacy;
+                    return note_kind;
+                }) as [NoteKind, NoteKind];
+                
+                if(legacy_fx[0] != null || legacy_fx[1] != null) {
+                    line = Object.assign(line, {legacy_fx});
+                }
+            }
+
+            if(match[3] !== '--') {
+                line.laser = match[3].split('').map(toLaserKind) as [LaserKind, LaserKind];
             }
 
             if(match[4] && match[5]) {

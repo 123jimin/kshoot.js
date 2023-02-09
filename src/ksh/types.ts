@@ -2,6 +2,10 @@ export const PULSES_PER_WHOLE = 192n;
 
 export type Pulse = bigint;
 
+export interface MeasureLine extends Omit<ChartLine, 'type'> {
+    options?: OptionLine[];
+}
+
 export interface Measure {
     /** Time signature of this measure */
     time_signature: [numerator: number ,denominator: number];
@@ -10,10 +14,7 @@ export interface Measure {
     /** Length of this measure, in pulses */
     length: Pulse,
     /** Chart lines, where each chart line is grouped with accompanying options */
-    lines: {
-        chart: ChartLine;
-        options: OptionLine[];
-    }[];
+    lines: MeasureLine[];
 }
 
 /** Parsed chart data; no further processing is done. */
@@ -110,9 +111,9 @@ export interface OptionLine {
 
 export interface ChartLine {
     type: 'chart';
-    bt: [NoteKind, NoteKind, NoteKind, NoteKind],
-    fx: [NoteKind, NoteKind],
-    laser: [LaserKind, LaserKind],
+    bt?: [NoteKind, NoteKind, NoteKind, NoteKind],
+    fx?: [NoteKind, NoteKind],
+    laser?: [LaserKind, LaserKind],
     spin?: LaneSpin,
 }
 
