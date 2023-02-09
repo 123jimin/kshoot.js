@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "dbaeumer.vscode-eslint",
-        "gruntfuggly.todo-tree"
+        "gruntfuggly.todo-tree",
+        "spmeesseman.vscode-taskexplorer"
     ]
 }
