@@ -74,7 +74,7 @@ export interface NoteInfo {
 export type ButtonNote = [ y: Pulse, length: Pulse ];
 export type ButtonNotes = SortedContainer<ButtonNote>;
 
-export type LaserSection = [ y: Pulse, v: Iterable<GraphSectionPoint>, w: number ];
+export type LaserSection = [ y: Pulse, v: SortedContainer<GraphSectionPoint>, w: number ];
 export type LaserSections = SortedContainer<LaserSection>;
 
 /* audio */

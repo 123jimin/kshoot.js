@@ -159,7 +159,28 @@ class Converter {
 
                 loop_laser: for(let i=0; i<2; ++i) {
                     const kind = (measure_line.laser ? measure_line.laser[i] : null);
-                    const last_laser = last_lasers[i];
+                    let last_laser = last_lasers[i];
+
+                    if(kind == null) {
+                        last_lasers[i] = null;
+                        continue loop_laser;
+                    }
+
+                    if(kind === ksh.LASER_CHAR_CONNECTION) {
+                        continue loop_laser;
+                    }
+
+                    if(!last_laser) {
+                        last_laser = last_lasers[i] = [
+                            pulse, [], 1 /* TODO */
+                        ];
+                        this.chart.addLaserSection(i, last_laser);
+                    }
+
+                    const pos = kind / ksh.LASER_POS_MAX;
+
+                    // TODO: handle slams
+                    last_laser[1].push([pulse - last_laser[0], [pos, pos], [0, 0]]);
                 }
 
                 pulse += pulses_per_line;

@@ -87,4 +87,44 @@ TEST("02-nov.ksh", function(ctx) {
 });
 
 TEST("03-nov.ksh", function(ctx) {
+    it("should contain no note", function() {
+        const {chart} = ctx;
+
+        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [0, 0, 0, 0], "no bt note");
+        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [0, 0], "no fx note");
+    });
+
+    it("should contain correct lasers", function() {
+        const {chart} = ctx;
+
+        const LASER_L = [
+            [0n, [
+                [0n, [0, 0], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [0, 0], [0, 0]],
+            ], 1],
+            [PULSES_PER_WHOLE, [
+                [0n, [0, 0], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [1, 1], [0, 0]],
+            ], 1],
+            [2n*PULSES_PER_WHOLE, [
+                [0n, [0, 0], [0, 0]],
+                [PULSES_PER_WHOLE/8n, [1, 1], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [0, 0], [0, 0]],
+                [3n*PULSES_PER_WHOLE/8n, [0.5, 0.5], [0, 0]],
+                [PULSES_PER_WHOLE/2n, [0, 0], [0, 0]],
+            ], 1],
+            [3n*PULSES_PER_WHOLE, [
+                [0n, [0, 1], [0, 0]],
+            ], 1],
+            [5n*PULSES_PER_WHOLE, [
+                [0n, [0, 1], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [0, 1], [0, 0]],
+            ], 1]
+        ], LASER_R = [
+
+        ];
+
+        assert.deepStrictEqual([...chart.note.laser[0]], LASER_L, "left laser must be equal");
+        assert.deepStrictEqual([...chart.note.laser[1]], LASER_R, "right laser must be equal");
+    });
 });

@@ -2,25 +2,10 @@ import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {default as readKSH} from "./read-ksh.js";
 
+import {SortedContainer} from "../ds.js";
+
 export type Pulse = kson.Pulse;
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
-
-function addBySortKey<K, T>(arr: Iterable<[K, T]>, [time, obj]: [K, T], unique = false) {
-    if(!Array.isArray(arr)) {
-        throw new TypeError(`Currently only an array is supported via this function!`);
-    }
-
-    // TODO: support adding at the beginning or in the middle of `arr`!
-    if(arr.length > 0 && time < arr[arr.length-1][0]) {
-        throw new Error("Not yet implemented!");
-    }
-
-    if(unique && arr.length > 0 && arr[arr.length-1][0] === time) {
-        arr[arr.length-1][1] = obj;
-    } else {
-        arr.push([time, obj]);
-    }
-}
 
 export class Chart implements kson.Kson {
     version: string = kson.VERSION;
@@ -56,19 +41,20 @@ export class Chart implements kson.Kson {
 
     /**
      * Sets the BPM for the given pulse.
-     * TODO: fix addBySortKey
      * @param pulse 
      * @param bpm 
      */
     setBPM(pulse: Pulse, bpm: number) {
         if(bpm <= 0) throw new RangeError(`Invalid BPM: ${bpm}!`);
 
-        addBySortKey(this.beat.bpm, [pulse, bpm], true);
+        // TODO: check duplicate in a better way
+        const last = this.beat.bpm.at(-1);
+        if(last && last[0] === pulse) last[1] = bpm;
+        else this.beat.bpm.push([pulse, bpm]);
     }
 
     /**
      * Sets the time signature from the given pulse.
-     * TODO: fix addBySortKey
      * @param pulse 
      * @param numerator 
      * @param denominator 
@@ -81,7 +67,10 @@ export class Chart implements kson.Kson {
             throw new RangeError(`Invalid denominator: ${denominator}`);
         }
 
-        addBySortKey(this.beat.time_sig, [measure_idx, [numerator, denominator]], true);
+        // TODO: check duplicate in a better way
+        const last = this.beat.time_sig.at(-1);
+        if(last && last[0] === measure_idx) last[1] = [numerator, denominator];
+        else this.beat.time_sig.push([measure_idx, [numerator, denominator]]);
     }
 
     addButtonNote(bt_or_fx_lane: number, note: kson.ButtonNote) {
@@ -90,15 +79,19 @@ export class Chart implements kson.Kson {
     }
 
     addBTNote(lane: number, note: kson.ButtonNote) {
-        addBySortKey(this.note.bt[lane], note, true);
+        this.note.bt[lane].push(note);
     }
 
     addFXNote(lane: number, note: kson.ButtonNote) {
-        addBySortKey(this.note.fx[lane], note, true);
+        this.note.fx[lane].push(note);
+    }
+
+    addLaserSection(lane: number, section: kson.LaserSection) {
+        this.note.laser[lane].push(section);
     }
 
     addComment(pulse: Pulse, comment: string) {
-        addBySortKey(this.editor.comment, [pulse, comment]);
+        this.editor.comment.push([pulse, comment]);
     }
 
     /**
