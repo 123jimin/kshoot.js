@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
+import type { SortedContainer } from "../ds.js";
+
 /** The latest version supported by this module */
 export const VERSION = "0.6.0";
 export const PULSES_PER_WHOLE = 960n;
@@ -50,9 +52,9 @@ export interface MetaInfo {
 
 /* beat */
 export interface BeatInfo {
-    bpm: Iterable<ByPulse<number>>;
-    time_sig: Iterable<ByMeasureIdx<TimeSig>>;
-    scroll_speed: Iterable<GraphPoint>;
+    bpm: SortedContainer<ByPulse<number>>;
+    time_sig: SortedContainer<ByMeasureIdx<TimeSig>>;
+    scroll_speed: SortedContainer<GraphPoint>;
 }
 
 export type TimeSig = [ numerator: number, denominator: number ];
@@ -70,10 +72,10 @@ export interface NoteInfo {
 }
 
 export type ButtonNote = [ y: Pulse, length: Pulse ];
-export type ButtonNotes = Iterable<ButtonNote>;
+export type ButtonNotes = SortedContainer<ButtonNote>;
 
 export type LaserSection = [ y: Pulse, v: Iterable<GraphSectionPoint>, w: number ];
-export type LaserSections = Iterable<LaserSection>;
+export type LaserSections = SortedContainer<LaserSection>;
 
 /* audio */
 export interface AudioInfo {
@@ -132,7 +134,7 @@ export interface BGInfo {}
 
 /* editor */
 export interface EditorInfo {
-    comment: Iterable<ByPulse<string>>;
+    comment: SortedContainer<ByPulse<string>>;
 }
 
 /* compat */
@@ -144,7 +146,7 @@ export interface CompatInfo {
 export interface KSHUnknownInfo {
     meta: {[name: string]: string};
     option: {[name: string]: ByPulse<string>};
-    line: Iterable<ByPulse<string>>;
+    line: SortedContainer<ByPulse<string>>;
 }
 
 /* Common objects */
