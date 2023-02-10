@@ -5,6 +5,8 @@ import * as kson from "../kson/index.js";
 import {Chart} from "./chart.js";
 
 const PULSE_MULTIPLIER = kson.PULSES_PER_WHOLE / ksh.PULSES_PER_WHOLE;
+const LASER_SLAM_PULSES_MAX = PULSE_MULTIPLIER * ksh.LASER_SLAM_PULSES_MAX;
+
 type ConvertedChart = Chart & { compat: kson.CompatInfo };
 
 const schema = Object.freeze({
@@ -172,14 +174,23 @@ class Converter {
 
                     if(!last_laser) {
                         last_laser = last_lasers[i] = [
-                            pulse, [], 1 /* TODO */
+                            pulse, [], 1 /* TODO: read wide lasers */
                         ];
                         this.chart.addLaserSection(i, last_laser);
                     }
 
                     const pos = kind / ksh.LASER_POS_MAX;
+                    const laser_sections = last_laser[1];
 
-                    // TODO: handle slams
+                    const last_laser_section = laser_sections.at(-1);
+                    if(last_laser_section) {
+                        // Handle slams
+                        if(pulse - last_laser_section[0] <= LASER_SLAM_PULSES_MAX) {
+                            last_laser_section[1][1] = kind;
+                            continue loop_laser;
+                        }
+                    }
+
                     last_laser[1].push([pulse - last_laser[0], [pos, pos], [0, 0]]);
                 }
 
