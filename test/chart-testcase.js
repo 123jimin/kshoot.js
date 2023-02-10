@@ -37,11 +37,9 @@ TEST("02-nov.ksh", function(ctx) {
             disp_bpm: "120",
         }, "meta must be equal");
 
-        assert.deepStrictEqual(chart.beat, {
-            bpm: [[0n, 120]],
-            time_sig: [[0n, [4, 4]]],
-            scroll_speed: [[0n, [1, 1], [0, 0]]],
-        }, "beat must be equal");
+        assert.deepStrictEqual([...chart.beat.bpm], [[0n, 120]], "bpm must be equal");
+        assert.deepStrictEqual([...chart.beat.time_sig], [[0n, [4, 4]]], "time_sig must be equal");
+        assert.deepStrictEqual([...chart.beat.scroll_speed], [[0n, [1, 1], [0, 0]]], "scroll_speed must be equal");
 
         assert.deepStrictEqual(chart.gauge, {
             total: 0,
@@ -63,26 +61,21 @@ TEST("02-nov.ksh", function(ctx) {
     it("should have the correct auxillary info", function() {
         const {chart} = ctx;
 
-        assert.deepStrictEqual(chart.editor, {
-            comment: [],
-        }, "editor must be equal");
+        assert.hasAllKeys(chart.editor, ['comment'], "editor must has specified keys");
+        assert.deepStrictEqual([...chart.editor.comment], [], "comment must be equal");
 
-        assert.deepStrictEqual(chart.compat, {
-            ksh_version: "171",
-            ksh_unknown: {
-                meta: {},
-                option: {},
-                line: [],
-            }
-        }, "compat must be equal");
+        assert.strictEqual(chart.compat.ksh_version, "171", "ksh_version must be equal");
+        assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
+        assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
+        assert.strictEqual(chart.compat.ksh_unknown.line.length, 0, "no unknown line");
     });
 
     it("should contain the correct amounts of notes", function() {
         const {chart} = ctx;
-        
+
         assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [16, 16, 16, 16], "16 notes for each bt lane");
         assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [16, 16], "16 notes for each fx lane");
-        assert.deepStrictEqual(chart.note.laser, [[], []], "note.laser must be empty");
+        assert.deepStrictEqual(chart.note.laser.map((lasers) => lasers.length), [0, 0], "note.laser must be empty");
     });
 });
 

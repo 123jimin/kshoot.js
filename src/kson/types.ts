@@ -145,7 +145,7 @@ export interface CompatInfo {
 
 export interface KSHUnknownInfo {
     meta: {[name: string]: string};
-    option: {[name: string]: ByPulse<string>};
+    option: {[name: string]: SortedContainer<ByPulse<string>>};
     line: SortedContainer<ByPulse<string>>;
 }
 

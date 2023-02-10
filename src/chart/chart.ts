@@ -2,8 +2,6 @@ import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {default as readKSH} from "./read-ksh.js";
 
-import {SortedContainer} from "../ds.js";
-
 export type Pulse = kson.Pulse;
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
 

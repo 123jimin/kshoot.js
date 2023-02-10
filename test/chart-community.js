@@ -25,11 +25,9 @@ describe('community/lyrium-1.ksh', function() {
             disp_bpm: "160-165",
         }, "meta must be equal");
 
-        assert.deepStrictEqual(chart.beat, {
-            bpm: [[0n, 160], [5n * PULSES_PER_WHOLE, 165]],
-            time_sig: [[0n, [4, 4]]],
-            scroll_speed: [[0n, [1, 1], [0, 0]]],
-        }, "beat must be equal");
+        assert.deepStrictEqual([...chart.beat.bpm], [[0n, 160], [5n * PULSES_PER_WHOLE, 165]], "bpm must be equal");
+        assert.deepStrictEqual([...chart.beat.time_sig], [[0n, [4, 4]]], "time_sig must be equal");
+        assert.deepStrictEqual([...chart.beat.scroll_speed], [[0n, [1, 1], [0, 0]]], "scroll_speed must be equal");
 
         assert.deepStrictEqual(chart.gauge, {
             total: 0,
@@ -49,18 +47,14 @@ describe('community/lyrium-1.ksh', function() {
     });
 
     it("should have the correct auxillary info", function() {
-        assert.deepStrictEqual(chart.editor, {
-            comment: [[1n * PULSES_PER_WHOLE, "START"], [9n * PULSES_PER_WHOLE, "END"]],
-        }, "editor must be equal");
+        assert.deepStrictEqual([...chart.editor.comment], [
+            [1n * PULSES_PER_WHOLE, "START"], [9n * PULSES_PER_WHOLE, "END"],
+        ], "comments must be equal");
 
-        assert.deepStrictEqual(chart.compat, {
-            ksh_version: "171",
-            ksh_unknown: {
-                meta: {},
-                option: {},
-                line: [],
-            }
-        }, "compat must be equal");
+        assert.strictEqual(chart.compat.ksh_version, "171", "ksh_version must be equal");
+        assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
+        assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
+        assert.strictEqual(chart.compat.ksh_unknown.line.length, 0, "no unknown line");
     });
 
     it("should contain the correct amounts of notes", function() {
@@ -73,14 +67,15 @@ describe('community/lyrium-1.ksh', function() {
             [0, 0, 0n, 9n*PULSES_PER_WHOLE],
             [1, 1, 5n, 9n*PULSES_PER_WHOLE - 5n],
         ]) {
-            const laser = chart.note.laser[laser_ind];
+            const lasers = chart.note.laser[laser_ind];
+            const first_laser = lasers.at(0);
 
-            assert.strictEqual(laser.length, 1, `note.laser[${laser_ind}] contains 1 segment`);
-            assert.strictEqual(laser[0][0], pulse_start, `start pulse of note.laser[${laser_ind}]`)
-            assert.strictEqual(laser[0][2], 1, `note.laser[${laser_ind}] is not wide`)
+            assert.strictEqual(lasers.length, 1, `note.laser[${laser_ind}] contains 1 segment`);
+            assert.strictEqual(first_laser[0], pulse_start, `start pulse of note.laser[${laser_ind}]`)
+            assert.strictEqual(first_laser[2], 1, `note.laser[${laser_ind}] is not wide`)
             
             let prev_ry = -1n;
-            for(const [ry, v, _curve] of laser[0][1]) {
+            for(const [ry, v, _curve] of first_laser[1]) {
                 assert.isTrue(prev_ry < ry && ry <= pulse_end - pulse_start, `note.laser[${laser_ind}]: ry ${ry}`);
                 if(prev_ry < 0n) {
                     assert.strictEqual(0n, ry, `note.laser[${laser_ind}]: first ry is zero`);
