@@ -154,3 +154,21 @@ describe('ksh.Reader', function() {
         });
     });
 });
+
+describe('ksh.Writer', function() {
+    describe('.serializeLine', function() {
+        it("should be able to serialize bar lines correctly", function() {
+            assert.strictEqual(ksh.Writer.serializeLine({type: 'bar'}), "--");
+        });
+
+        it("should be able to serialize comment lines correctly", function() {
+            assert.strictEqual(ksh.Writer.serializeLine({
+                type: 'comment', value: "This is a comment."
+            }), "//This is a comment.");
+
+            assert.strictEqual(ksh.Writer.serializeLine({
+                type: 'comment', value: " \tThis is a comment.\t "
+            }), "// \tThis is a comment.\t ", "blank characters must be preserved");
+        });
+    });
+});

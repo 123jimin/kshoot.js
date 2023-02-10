@@ -1,4 +1,8 @@
+/** Pulses per a whole note (4 quarter notes)  */
 export const PULSES_PER_WHOLE = 192n;
+
+/** Maximal length of a slant laser that would be considered as a slam */
+export const LASER_SLAM_PULSES_MAX = PULSES_PER_WHOLE / 32n;
 
 export type Pulse = bigint;
 
@@ -93,6 +97,7 @@ export const fxToNoteKind = (ch: string): [NoteKind, string|null] => {
 
 /** number: pos (0 to 50), ':': connection */
 export type LaserKind = number|':'|null;
+
 export const LASER_POS_MAX = 50;
 export const LASER_POS_WIDE_LEFT = 12;
 export const LASER_POS_WIDE_RIGHT = 37;
