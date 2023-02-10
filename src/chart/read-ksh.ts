@@ -127,7 +127,10 @@ class Converter {
             const pulses_per_line = (measure.length * PULSE_MULTIPLIER) / BigInt(measure.lines.length);
 
             for(const measure_line of measure.lines) {
+                const options: Record<string, string> = {};
                 if(measure_line.options) for(const option of measure_line.options) {
+                    options[option.name] = option.value;
+
                     switch(option.name) {
                         case 't': {
                             const bpm = schema.bpm.parse(option.value);
@@ -174,7 +177,7 @@ class Converter {
 
                     if(!last_laser) {
                         last_laser = last_lasers[i] = [
-                            pulse, [], 1 /* TODO: read wide lasers */
+                            pulse, [], (options[`laserrange_${i === 0 ? 'l' : 'r'}`] === "2x" ? 2 : 1),
                         ];
                         this.chart.addLaserSection(i, last_laser);
                     }
