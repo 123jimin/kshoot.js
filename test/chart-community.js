@@ -1,17 +1,12 @@
-import * as fs from 'node:fs/promises';
 import {assert} from 'chai';
 
-import {PULSES_PER_WHOLE, kson, parse as parseChart} from "../dist/index.js";
+import {PULSES_PER_WHOLE, kson} from "../dist/index.js";
+import {TEST} from "./_common.js";
 
-const readChart = (file_name) => fs.readFile(new URL(`chart/community/${file_name}`, import.meta.url), 'utf-8');
-
-describe('community/lyrium-1.ksh', function() {
-    let chart_file = "";
-    let chart = null;
-
-    before(async () => { chart_file = await readChart("lyrium-1.ksh"); chart = parseChart(chart_file) });
-
+TEST("community/lyrium-1.ksh", function(ctx) {
     it("should have the correct metadata", function() {
+        const {chart} = ctx;
+
         assert.strictEqual(chart.version, kson.VERSION);
 
         assert.deepStrictEqual(chart.meta, {
@@ -47,6 +42,8 @@ describe('community/lyrium-1.ksh', function() {
     });
 
     it("should have the correct auxillary info", function() {
+        const {chart} = ctx;
+
         assert.deepStrictEqual([...chart.editor.comment], [
             [1n * PULSES_PER_WHOLE, "START"], [9n * PULSES_PER_WHOLE, "END"],
         ], "comments must be equal");
@@ -54,15 +51,19 @@ describe('community/lyrium-1.ksh', function() {
         assert.strictEqual(chart.compat.ksh_version, "171", "ksh_version must be equal");
         assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
         assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
-        assert.strictEqual(chart.compat.ksh_unknown.line.length, 0, "no unknown line");
+        assert.strictEqual(chart.compat.ksh_unknown.line.size, 0, "no unknown line");
     });
 
     it("should contain the correct amounts of notes", function() {
-        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [1341, 1341, 1341, 1341], "1341 notes for each bt lane");
-        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [1341, 1341], "1341 notes for each fx lane");
+        const {chart} = ctx;
+
+        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.size), [1341, 1341, 1341, 1341], "1341 notes for each bt lane");
+        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.size), [1341, 1341], "1341 notes for each fx lane");
     });
 
     it("should contain correct lasers", function() {
+        const {chart} = ctx;
+
         for(const [laser_ind, laser_val, pulse_start, pulse_end] of [
             [0, 0, 0n, 9n*PULSES_PER_WHOLE],
             [1, 1, 5n, 9n*PULSES_PER_WHOLE - 5n],
@@ -70,7 +71,7 @@ describe('community/lyrium-1.ksh', function() {
             const lasers = chart.note.laser[laser_ind];
             const first_laser = lasers.at(0);
 
-            assert.strictEqual(lasers.length, 1, `note.laser[${laser_ind}] contains 1 segment`);
+            assert.strictEqual(lasers.size, 1, `note.laser[${laser_ind}] contains 1 segment`);
             assert.strictEqual(first_laser[0], pulse_start, `start pulse of note.laser[${laser_ind}]`)
             assert.strictEqual(first_laser[2], 1, `note.laser[${laser_ind}] is not wide`)
             

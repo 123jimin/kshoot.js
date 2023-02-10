@@ -1,3 +1,5 @@
+import type {z} from 'zod';
+
 import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {default as readKSH} from "./read-ksh.js";
@@ -5,20 +7,28 @@ import {default as readKSH} from "./read-ksh.js";
 export type Pulse = kson.Pulse;
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
 
+type ChartMetaInfo = z.output<typeof kson.schema.MetaInfo>;
+type ChartBeatInfo = z.output<typeof kson.schema.BeatInfo>;
+type ChartGaugeInfo = z.output<typeof kson.schema.GaugeInfo>;
+type ChartNoteInfo = z.output<typeof kson.schema.NoteInfo>;
+type ChartAudioInfo = z.output<typeof kson.schema.AudioInfo>;
+type ChartEditorInfo = z.output<typeof kson.schema.EditorInfo>;
+type ChartCompatInfo = z.output<typeof kson.schema.CompatInfo>;
+
 export class Chart implements kson.Kson {
     version: string = kson.VERSION;
-    meta: kson.MetaInfo = kson.schema.MetaInfo.parse({});
-    beat: kson.BeatInfo = kson.schema.BeatInfo.parse({});
-    private _gauge?: kson.GaugeInfo;
-    get gauge(): kson.GaugeInfo { return this._gauge ?? (this._gauge = kson.schema.GaugeInfo.parse({})); }
-    note: kson.NoteInfo = kson.schema.NoteInfo.parse({});
-    private _audio?: kson.AudioInfo;
-    get audio(): kson.AudioInfo { return this._audio ?? (this._audio = kson.schema.AudioInfo.parse({})); }
+    meta: ChartMetaInfo = kson.schema.MetaInfo.parse({});
+    beat: ChartBeatInfo = kson.schema.BeatInfo.parse({});
+    private _gauge?: ChartGaugeInfo;
+    get gauge(): ChartGaugeInfo { return this._gauge ?? (this._gauge = kson.schema.GaugeInfo.parse({})); }
+    note: ChartNoteInfo = kson.schema.NoteInfo.parse({});
+    private _audio?: ChartAudioInfo;
+    get audio(): ChartAudioInfo { return this._audio ?? (this._audio = kson.schema.AudioInfo.parse({})); }
     private _camera?: kson.CameraInfo;
     private _bg?: kson.BGInfo;
-    private _editor?: kson.EditorInfo;
-    get editor(): kson.EditorInfo { return this._editor ?? (this._editor = kson.schema.EditorInfo.parse({})); }
-    compat?: kson.CompatInfo;
+    private _editor?: ChartEditorInfo;
+    get editor(): ChartEditorInfo { return this._editor ?? (this._editor = kson.schema.EditorInfo.parse({})); }
+    compat?: ChartCompatInfo;
     impl?: unknown;
 
     /**
@@ -44,11 +54,8 @@ export class Chart implements kson.Kson {
      */
     setBPM(pulse: Pulse, bpm: number) {
         if(bpm <= 0) throw new RangeError(`Invalid BPM: ${bpm}!`);
-
-        // TODO: check duplicate in a better way
-        const last = this.beat.bpm.at(-1);
-        if(last && last[0] === pulse) last[1] = bpm;
-        else this.beat.bpm.push([pulse, bpm]);
+        
+        this.beat.bpm.put([pulse, bpm]);
     }
 
     /**
@@ -65,10 +72,7 @@ export class Chart implements kson.Kson {
             throw new RangeError(`Invalid denominator: ${denominator}`);
         }
 
-        // TODO: check duplicate in a better way
-        const last = this.beat.time_sig.at(-1);
-        if(last && last[0] === measure_idx) last[1] = [numerator, denominator];
-        else this.beat.time_sig.push([measure_idx, [numerator, denominator]]);
+        this.beat.time_sig.put([measure_idx, [numerator, denominator]]);
     }
 
     addButtonNote(bt_or_fx_lane: number, note: kson.ButtonNote) {
@@ -77,15 +81,17 @@ export class Chart implements kson.Kson {
     }
 
     addBTNote(lane: number, note: kson.ButtonNote) {
-        this.note.bt[lane].push(note);
+        this.note.bt[lane].put(note);
     }
 
     addFXNote(lane: number, note: kson.ButtonNote) {
-        this.note.fx[lane].push(note);
+        this.note.fx[lane].put(note);
     }
 
-    addLaserSection(lane: number, section: kson.LaserSection) {
-        this.note.laser[lane].push(section);
+    addLaserSection(lane: number, section: kson.LaserSection): z.output<typeof kson.schema.LaserSection> {
+        const parsed_section = kson.schema.LaserSection.parse(section);
+        this.note.laser[lane].put(parsed_section);
+        return parsed_section;
     }
 
     addComment(pulse: Pulse, comment: string) {
@@ -99,19 +105,17 @@ export class Chart implements kson.Kson {
     setKSON(kson_obj: Readonly<kson.Kson>|null) {
         if(!kson_obj) kson_obj = kson.schema.Kson.parse({});
 
-        ({
-            version: this.version,
-            meta: this.meta,
-            beat: this.beat,
-            note: this.note,
-        } = kson_obj);
+        this.version = kson_obj.version;
+        this.meta = kson_obj.meta;
+        this.beat = kson.schema.BeatInfo.parse(kson_obj.beat);
+        this.note = kson.schema.NoteInfo.parse(kson_obj.note);
 
         if(kson_obj.gauge != null) this._gauge = kson_obj.gauge;
-        if(kson_obj.audio != null) this._audio = kson_obj.audio;
+        if(kson_obj.audio != null) this._audio = kson.schema.AudioInfo.parse(kson_obj.audio);
         if(kson_obj.camera != null) this._camera = kson_obj.camera;
         if(kson_obj.bg != null) this._bg = kson_obj.bg;
-        if(kson_obj.editor != null) this._editor = kson_obj.editor;
-        if(kson_obj.compat != null) this.compat = kson_obj.compat;
+        if(kson_obj.editor != null) this._editor = kson.schema.EditorInfo.parse(kson_obj.editor);
+        if(kson_obj.compat != null) this.compat = kson.schema.CompatInfo.parse(kson_obj.compat);
         if(kson_obj.impl != null) this.impl = kson_obj.impl;
     }
 

@@ -2,11 +2,15 @@
 
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania. This project supersedes [kson-js](https://github.com/123jimin/kson-js).
 
+This library is focused on having a simple, modular, and intuitive codebase with little dependency.
+
 ## Warning
 
-### Stability
+Currently, kshoot.js is not ready to be used.
 
-Currently, kshoot.js is not ready to be used; the API is constantly changing.
+- The underlying data structure is quite slow.
+    - I'm planning to use [sorted-btree](https://github.com/qwertie/btree-typescript) as the underlying data structure.
+- The API is not yet stable.
 
 I'll try my best to keep the code below working.
 
@@ -29,14 +33,6 @@ for(const [y, len] of note.bt[0]) {
 }
 
 ```
-
-### Performance
-
-This library is focused on having a simple, modular, and intuitive codebase with little dependency.
-At least for now, it will be embraced to have extra time/space costs, including suboptimal time complexity.
-
-Those extra costs may impact you depending on your usecases.
-For applications such as chart editors, use other data structure libraries with this library for better performance.
 
 ## Example
 

@@ -1,26 +1,12 @@
-import * as fs from 'node:fs/promises';
 import {assert} from 'chai';
 
-import {PULSES_PER_WHOLE, kson, parse as parseChart} from "../dist/index.js";
+import {PULSES_PER_WHOLE, kson} from "../dist/index.js";
+import {TEST, assertLaserEqual} from "./_common.js";
 
-const readChart = (file_name) => fs.readFile(new URL(`chart/testcase/${file_name}`, import.meta.url), 'utf-8');
-
-const TEST = (chart_name, callback) => {
-    describe(`testcase/${chart_name}`, function() {
-        const ctx = { file: "", chart: null };
-        before("chart load", async function() {
-            ctx.file = await readChart(chart_name);
-            ctx.chart = parseChart(ctx.file);
-        });
-
-        callback.call(this, ctx);
-    });
-};
-
-TEST("01-nov.ksh", function(ctx) {
+TEST("testcase/01-nov.ksh", function(ctx) {
 });
 
-TEST("02-nov.ksh", function(ctx) {
+TEST("testcase/02-nov.ksh", function(ctx) {
     it("should have the correct metadata", function() {
         const {chart} = ctx;
 
@@ -67,30 +53,30 @@ TEST("02-nov.ksh", function(ctx) {
         assert.strictEqual(chart.compat.ksh_version, "171", "ksh_version must be equal");
         assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
         assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
-        assert.strictEqual(chart.compat.ksh_unknown.line.length, 0, "no unknown line");
+        assert.strictEqual(chart.compat.ksh_unknown.line.size, 0, "no unknown line");
     });
 
     it("should contain the correct amounts of notes", function() {
         const {chart} = ctx;
 
-        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [16, 16, 16, 16], "16 notes for each bt lane");
-        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [16, 16], "16 notes for each fx lane");
-        assert.deepStrictEqual(chart.note.laser.map((lasers) => lasers.length), [0, 0], "note.laser must be empty");
+        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.size), [16, 16, 16, 16], "16 notes for each bt lane");
+        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.size), [16, 16], "16 notes for each fx lane");
+        assert.deepStrictEqual(chart.note.laser.map((lasers) => lasers.size), [0, 0], "note.laser must be empty");
     });
 });
 
-TEST("03-nov.ksh", function(ctx) {
+TEST("testcase/03-nov.ksh", function(ctx) {
     it("should contain no note", function() {
         const {chart} = ctx;
 
-        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.length), [0, 0, 0, 0], "no bt note");
-        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.length), [0, 0], "no fx note");
+        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.size), [0, 0, 0, 0], "no bt note");
+        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.size), [0, 0], "no fx note");
     });
 
     it("should contain correct lasers", function() {
         const {chart} = ctx;
 
-        const LASER_L = [
+        const LASERS = [[
             [0n, [
                 [0n, [0, 0], [0, 0]],
                 [PULSES_PER_WHOLE/4n, [0, 0], [0, 0]],
@@ -113,7 +99,7 @@ TEST("03-nov.ksh", function(ctx) {
                 [0n, [0, 1], [0, 0]],
                 [PULSES_PER_WHOLE/4n, [0, 1], [0, 0]],
             ], 1],
-        ], LASER_R = [
+        ], [
             [PULSES_PER_WHOLE/2n, [
                 [0n, [1, 1], [0, 0]],
                 [PULSES_PER_WHOLE/4n, [1, 1], [0, 0]],
@@ -136,9 +122,8 @@ TEST("03-nov.ksh", function(ctx) {
                 [0n, [1, 0], [0, 0]],
                 [PULSES_PER_WHOLE/4n, [1, 0], [0, 0]],
             ], 1],
-        ];
+        ]];
 
-        assert.deepStrictEqual([...chart.note.laser[0]], LASER_L, "left laser must be equal");
-        assert.deepStrictEqual([...chart.note.laser[1]], LASER_R, "right laser must be equal");
+        assertLaserEqual(chart.note.laser, LASERS);
     });
 });

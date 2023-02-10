@@ -113,7 +113,7 @@ class Converter {
         type LastNote = kson.ButtonNote|null;
         const last_notes: [LastNote, LastNote, LastNote, LastNote, LastNote, LastNote] = [null, null, null, null, null, null];
         
-        type LastLaserSection = kson.LaserSection|null;
+        type LastLaserSection = ReturnType<typeof kson.schema.LaserSection.parse>|null;
         const last_lasers: [LastLaserSection, LastLaserSection] = [null, null];
 
         let measure_idx = 0n;
@@ -176,10 +176,9 @@ class Converter {
                     }
 
                     if(!last_laser) {
-                        last_laser = last_lasers[i] = [
+                        last_laser = last_lasers[i] = this.chart.addLaserSection(i, [
                             pulse, [], (options[`laserrange_${i === 0 ? 'l' : 'r'}`] === "2x" ? 2 : 1),
-                        ];
-                        this.chart.addLaserSection(i, last_laser);
+                        ]);
                     }
 
                     const pos = kind / ksh.LASER_POS_MAX;
@@ -194,7 +193,7 @@ class Converter {
                         }
                     }
 
-                    last_laser[1].push([pulse - last_laser[0], [pos, pos], [0, 0]]);
+                    last_laser[1].put([pulse - last_laser[0], [pos, pos], [0, 0]]);
                 }
 
                 pulse += pulses_per_line;

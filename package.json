@@ -1,6 +1,6 @@
 {
   "name": "kshoot",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "JavaScript/TypeScript library for reading KSH and KSON charts for K-Shoot Mania",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -38,6 +38,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "sorted-btree": "^1.8.1",
     "zod": "^3.20.2"
   }
 }
