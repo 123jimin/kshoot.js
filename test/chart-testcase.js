@@ -119,9 +119,30 @@ TEST("03-nov.ksh", function(ctx) {
             [5n*PULSES_PER_WHOLE, [
                 [0n, [0, 1], [0, 0]],
                 [PULSES_PER_WHOLE/4n, [0, 1], [0, 0]],
-            ], 1]
+            ], 1],
         ], LASER_R = [
-
+            [PULSES_PER_WHOLE/2n, [
+                [0n, [1, 1], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [1, 1], [0, 0]],
+            ], 1],
+            [3n*PULSES_PER_WHOLE/2n, [
+                [0n, [1, 1], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [0, 0], [0, 0]],
+            ], 1],
+            [5n*PULSES_PER_WHOLE/2n, [
+                [0n, [1, 1], [0, 0]],
+                [PULSES_PER_WHOLE/8n, [0, 0], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [1, 1], [0, 0]],
+                [3n*PULSES_PER_WHOLE/8n, [0.5, 0.5], [0, 0]],
+                [PULSES_PER_WHOLE/2n, [1, 1], [0, 0]],
+            ], 1],
+            [4n*PULSES_PER_WHOLE, [
+                [0n, [1, 0], [0, 0]],
+            ], 1],
+            [11n*PULSES_PER_WHOLE/2n, [
+                [0n, [1, 0], [0, 0]],
+                [PULSES_PER_WHOLE/4n, [1, 0], [0, 0]],
+            ], 1],
         ];
 
         assert.deepStrictEqual([...chart.note.laser[0]], LASER_L, "left laser must be equal");

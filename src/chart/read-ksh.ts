@@ -185,8 +185,8 @@ class Converter {
                     const last_laser_section = laser_sections.at(-1);
                     if(last_laser_section) {
                         // Handle slams
-                        if(pulse - last_laser_section[0] <= LASER_SLAM_PULSES_MAX) {
-                            last_laser_section[1][1] = kind;
+                        if(pulse - (last_laser_section[0] + last_laser[0]) <= LASER_SLAM_PULSES_MAX) {
+                            last_laser_section[1][1] = pos;
                             continue loop_laser;
                         }
                     }

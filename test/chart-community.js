@@ -79,14 +79,15 @@ describe('community/lyrium-1.ksh', function() {
             assert.strictEqual(laser[0][0], pulse_start, `start pulse of note.laser[${laser_ind}]`)
             assert.strictEqual(laser[0][2], 1, `note.laser[${laser_ind}] is not wide`)
             
-            let prev_tick = 0n;
+            let prev_ry = -1n;
             for(const [ry, v, _curve] of laser[0][1]) {
-                assert.isTrue(prev_tick <= ry && ry <= pulse_end - pulse_start, `note.laser[${laser_ind}]: ry ${ry}`);
-                if(prev_tick === 0n) {
+                assert.isTrue(prev_ry < ry && ry <= pulse_end - pulse_start, `note.laser[${laser_ind}]: ry ${ry}`);
+                if(prev_ry < 0n) {
                     assert.strictEqual(0n, ry, `note.laser[${laser_ind}]: first ry is zero`);
                 }
 
                 assert.deepStrictEqual(v, [laser_val, laser_val], `note.laser[${laser_ind}]: value at ry ${ry}`);
+                prev_ry = ry;
             }
         }
     });
