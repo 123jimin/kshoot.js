@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {NaiveSortedListFactory} from "../dist/sorted-list.js";
+import {SortedList} from "../dist/sorted-list.js";
 
 function TEST_LIST(label, SortedList) {
     describe(label, function() {
@@ -98,4 +98,4 @@ function TEST_LIST(label, SortedList) {
     });
 }
 
-TEST_LIST("NaiveSortedList", NaiveSortedListFactory());
+TEST_LIST("SortedList", SortedList);

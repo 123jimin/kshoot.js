@@ -3,6 +3,7 @@ import {z} from 'zod';
 import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {Chart} from "./chart.js";
+import {Rest} from "../util.js";
 
 const PULSE_MULTIPLIER = kson.PULSES_PER_WHOLE / ksh.PULSES_PER_WHOLE;
 const LASER_SLAM_PULSES_MAX = PULSE_MULTIPLIER * ksh.LASER_SLAM_PULSES_MAX;
@@ -156,7 +157,7 @@ class Converter {
                         continue loop_note;
                     }
 
-                    const next_note: [bigint, bigint] = [pulse, kind === ksh.NoteKind.Long ? pulses_per_line : 0n];
+                    const next_note: [kson.Pulse, kson.Pulse] = [pulse, kind === ksh.NoteKind.Long ? pulses_per_line : 0n];
 
                     this.chart.addButtonNote(i, next_note);
                     last_notes[i] = next_note;
@@ -184,11 +185,11 @@ class Converter {
                     const pos = kind / ksh.LASER_POS_MAX;
                     const laser_sections = last_laser[1];
 
-                    const last_laser_section = laser_sections.at(-1);
+                    const last_laser_section: [kson.Pulse, Rest<kson.GraphSectionPoint>]|undefined = laser_sections.entriesReversed().next().value;
                     if(last_laser_section) {
                         // Handle slams
                         if(pulse - (last_laser_section[0] + last_laser[0]) <= LASER_SLAM_PULSES_MAX) {
-                            last_laser_section[1][1] = pos;
+                            last_laser_section[1][0][1] = pos;
                             continue loop_laser;
                         }
                     }

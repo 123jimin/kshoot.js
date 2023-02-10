@@ -4,15 +4,14 @@ import { VERSION } from "./types.js";
 import type * as types from "./types.js";
 
 import { isIterable } from "../util.js";
-import { NaiveSortedListFactory } from "../sorted-list.js";
+import { SortedList } from "../sorted-list.js";
 
-function SortedList<T extends z.ZodTypeAny>(schema: T) {
-    const NaiveSortedList = NaiveSortedListFactory<z.output<T>>();
+function toSortedList<T extends z.ZodTypeAny>(schema: T) {
     return z.preprocess((v) => {
         if(Array.isArray(v)) return v;
         if(isIterable(v)) return [...v];
         return v;
-    }, z.array(schema).transform((v) => new NaiveSortedList(v)));
+    }, z.array(schema).transform((v) => new SortedList<z.output<T>>(v)));
 }
 
 export const Pulse = z.coerce.bigint();
@@ -65,9 +64,9 @@ export const MetaInfo = z.object({
 export const TimeSig = z.tuple([z.coerce.number().positive().int(), z.coerce.number().positive().int()]);
 
 export const BeatInfo = z.object({
-    bpm: SortedList(ByPulse(z.coerce.number().finite().positive())).default([[0n, 120]]),
-    time_sig: SortedList(ByMeasureIdx(TimeSig)).default([[0n, [4, 4]]]),
-    scroll_speed: SortedList(GraphPoint).default([[0n, [1.0, 1.0], [0.0, 0.0]]]),
+    bpm: toSortedList(ByPulse(z.coerce.number().finite().positive())).default([[0n, 120]]),
+    time_sig: toSortedList(ByMeasureIdx(TimeSig)).default([[0n, [4, 4]]]),
+    scroll_speed: toSortedList(GraphPoint).default([[0n, [1.0, 1.0], [0.0, 0.0]]]),
 });
 
 /* gauge */
@@ -77,10 +76,10 @@ export const GaugeInfo = z.object({
 
 /* note */
 export const ButtonNote = z.union([Pulse.transform<types.ButtonNote>((y) => [y, 0n]), z.tuple([Pulse, Pulse])]);
-const ButtonNoteList = SortedList(ButtonNote);
+const ButtonNoteList = toSortedList(ButtonNote);
 
-export const LaserSection = z.tuple([Pulse, SortedList(GraphSectionPoint), z.coerce.number().finite().positive().default(1)]);
-const LaserSectionList = SortedList(LaserSection);
+export const LaserSection = z.tuple([Pulse, toSortedList(GraphSectionPoint), z.coerce.number().finite().positive().default(1)]);
+const LaserSectionList = toSortedList(LaserSection);
 
 export const NoteInfo = z.object({
     bt: z.tuple([ButtonNoteList, ButtonNoteList, ButtonNoteList, ButtonNoteList]).default([[], [], [], []]),
@@ -146,7 +145,7 @@ export const EditorInfo = z.object({
 export const KSHUnknownInfo = z.object({
     meta: z.record(z.coerce.string()).default({}),
     option: z.record(z.array(ByPulse(z.coerce.string()))).default({}),
-    line: SortedList(ByPulse(z.coerce.string().default(""))).default([]),
+    line: toSortedList(ByPulse(z.coerce.string().default(""))).default([]),
 });
 
 export const CompatInfo = z.object({

@@ -69,14 +69,14 @@ TEST("community/lyrium-1.ksh", function(ctx) {
             [1, 1, 5n, 9n*PULSES_PER_WHOLE - 5n],
         ]) {
             const lasers = chart.note.laser[laser_ind];
-            const first_laser = lasers.at(0);
+            const first_laser = lasers.entries().next().value;
 
             assert.strictEqual(lasers.size, 1, `note.laser[${laser_ind}] contains 1 segment`);
             assert.strictEqual(first_laser[0], pulse_start, `start pulse of note.laser[${laser_ind}]`)
-            assert.strictEqual(first_laser[2], 1, `note.laser[${laser_ind}] is not wide`)
+            assert.strictEqual(first_laser[1][1], 1, `note.laser[${laser_ind}] is not wide`)
             
             let prev_ry = -1n;
-            for(const [ry, v, _curve] of first_laser[1]) {
+            for(const [ry, v, _curve] of first_laser[1][0]) {
                 assert.isTrue(prev_ry < ry && ry <= pulse_end - pulse_start, `note.laser[${laser_ind}]: ry ${ry}`);
                 if(prev_ry < 0n) {
                     assert.strictEqual(0n, ry, `note.laser[${laser_ind}]: first ry is zero`);

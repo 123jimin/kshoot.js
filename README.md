@@ -4,13 +4,11 @@ This is JavaScript/TypeScript library for manipulating KSH and KSON chart files 
 
 This library is focused on having a simple, modular, and intuitive codebase with little dependency.
 
+Internally, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](https://github.com/qwertie/btree-typescript).
+
 ## Warning
 
-Currently, kshoot.js is not ready to be used.
-
-- The underlying data structure is quite slow.
-    - I'm planning to use [sorted-btree](https://github.com/qwertie/btree-typescript) as the underlying data structure.
-- The API is not yet stable.
+Currently, kshoot.js is not ready to be used. The API is not yet stable.
 
 I'll try my best to keep the code below working.
 
