@@ -27,10 +27,11 @@ export interface ButtonObject {
 }
 
 export interface LaserObject {
-    lane: 0|1;
+    section_pulse: kson.Pulse;
+    lane: 0|1; width: number;
     length: kson.Pulse;
-    v: kson.GraphValue,
-    curve: kson.GraphCurveValue,
+    v: Readonly<kson.GraphValue>,
+    curve: Readonly<kson.GraphCurveValue>,
 }
 
 /** Notes and lasers */

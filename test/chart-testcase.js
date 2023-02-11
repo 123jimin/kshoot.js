@@ -111,7 +111,7 @@ TEST("testcase/02-adv.ksh", function(ctx) {
         let prev_pulse = -1n;
         let prev_measure_idx = -1n;
         let prev_time = -1;
-        for(const [timing_info, button_objects] of chart.buttonNotes()) {
+        for(const [timing_info, button_objects] of chart.withTimingInfo(chart.buttonNotes())) {
             assert.isTrue(prev_pulse < timing_info.pulse, "pulse should advance");
             assert.isTrue(prev_time < timing_info.time, "time should advance");
             assert.isTrue(prev_measure_idx === timing_info.measure.idx || prev_measure_idx + 1n === timing_info.measure.idx, "measure_idx should increase slowly");

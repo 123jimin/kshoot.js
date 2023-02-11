@@ -54,7 +54,7 @@ export class Chart implements kson.Kson {
         this.setKSON(null);
     }
 
-    *attachTimingInfo<T>(it: IterableIterator<[kson.Pulse, T]>): Generator<[Readonly<TimingInfo>, T]> {
+    *withTimingInfo<T>(it: IterableIterator<[kson.Pulse, T]>): Generator<[Readonly<TimingInfo>, T]> {
         const bpm_it = this.beat.bpm[Symbol.iterator]();
         const time_sig_it = this.beat.time_sig[Symbol.iterator]();
 
@@ -108,14 +108,38 @@ export class Chart implements kson.Kson {
         }
     }
 
-    *buttonNotes(): Generator<[Readonly<TimingInfo>, ButtonObject[]]> {
-        for(const [timing_info, buttons] of this.attachTimingInfo(iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx))) {
-            yield [timing_info, buttons.map(([lane, length]) => ({lane, length}))];
+    *buttonNotes(): Generator<[Pulse, ButtonObject[]]> {
+        for(const [pulse, buttons] of iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx)) {
+            yield [pulse, buttons.map(([lane, length]) => ({lane, length}))];
         }
     }
 
-    *laserNotes(): Generator<[Readonly<TimingInfo>, LaserObject[]]> {
-        
+    laserNotes(lane: 0|1): Generator<[Pulse, LaserObject]>;
+    laserNotes(): Generator<[Pulse, LaserObject[]]>;
+
+    *laserNotes(lane?: 0|1): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
+        if(lane == null) {
+            return iterateAll<[Pulse, LaserObject]>(this.laserNotes(0), this.laserNotes(1));
+        }
+
+        for(const [pulse, laser_sections, width] of this.note.laser[lane]) {
+            const section_it = laser_sections[Symbol.iterator]();
+            let {value: curr_section}: {value: kson.GraphSectionPoint} = section_it.next();
+            let {value: next_section}: {value?: kson.GraphSectionPoint} = section_it.next();
+
+            while(true) {
+                const length: kson.Pulse = next_section ? next_section[0] - curr_section[0] : 0n;
+                yield [pulse + curr_section[0], {
+                    section_pulse: pulse,
+                    lane, width, length,
+                    v: curr_section[1], curve: curr_section[2],
+                }];
+                
+                if(!next_section) break;
+                curr_section = next_section;
+                next_section = section_it.next().value;
+            }
+        }
     }
 
     /**
