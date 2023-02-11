@@ -1,8 +1,15 @@
 import type {z} from 'zod';
 
+import {iterateAll} from "../util.js";
+
 import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {default as readKSH} from "./read-ksh.js";
+import type {
+    MeasureInfo, TimingInfo,
+    ButtonObject, LaserObject,
+    NoteObject, ChartObject
+} from "./object.js";
 
 export type Pulse = kson.Pulse;
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
@@ -45,6 +52,18 @@ export class Chart implements kson.Kson {
      */
     reset() {
         this.setKSON(null);
+    }
+
+    *buttonNotes(): Generator<[TimingInfo, ButtonObject[]]> {
+        for(const [pulse, buttons] of iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx)) {
+            // TODO: get timingInfo
+            const timing_info: TimingInfo = null as unknown as TimingInfo;
+            yield [timing_info, buttons.map(([lane, length]) => ({lane, length}))];
+        }
+    }
+
+    *laserNotes(): Generator<[TimingInfo, LaserObject[]]> {
+        
     }
 
     /**

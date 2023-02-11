@@ -1,16 +1,16 @@
 import * as kson from "../kson/index.js";
 
-export interface MeasureData {
+export interface MeasureInfo {
     index: kson.MeasureIdx;
     length: kson.Pulse;
     beat: kson.Pulse;
 }
 
-export interface TimingData {
+export interface TimingInfo {
     pulse: kson.Pulse;
     time: number;
     bpm: number;
-    measure: MeasureData;
+    measure: MeasureInfo;
 }
 
 export enum NoteLane {

@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import {SortedList, iterateAll} from "../dist/sorted-list.js";
+import {SortedList} from "../dist/sorted-list.js";
+import {iterateAll} from "../dist/util.js";
 
 function TEST_LIST(label, SortedList) {
     describe(label, function() {
