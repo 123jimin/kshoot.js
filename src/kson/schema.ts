@@ -110,8 +110,8 @@ export const KeySoundInvokeFX = z.object({
 });
 
 export const KeySoundInvokeListFX = z.record(z.string(), z.tuple([
-    z.array(z.union([Pulse, ByPulse(KeySoundInvokeFX)])),
-    z.array(z.union([Pulse, ByPulse(KeySoundInvokeFX)])),
+    toSortedList(ByPulse(KeySoundInvokeFX)),
+    toSortedList(ByPulse(KeySoundInvokeFX)),
 ]));
 
 export const KeySoundFXInfo = z.object({

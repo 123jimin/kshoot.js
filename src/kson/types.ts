@@ -107,7 +107,7 @@ export interface KeySoundFXInfo {
 }
 
 export interface KeySoundInvokeListFX {
-    [filename: string]: [(Pulse|ByPulse<KeySoundInvokeFX>)[], (Pulse|ByPulse<KeySoundInvokeFX>)[]];
+    [filename: string]: [Iterable<ByPulse<KeySoundInvokeFX>>, Iterable<ByPulse<KeySoundInvokeFX>>];
 }
 
 export interface KeySoundInvokeFX {

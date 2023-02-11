@@ -29,7 +29,7 @@ export class SortedList<V extends AsTuple<V>> extends BTree<First<V>, Rest<V>> i
     }
 }
 
-export function* iterateAll<V extends AsTuple<V>>(...lists: ISortedList<V>[]): Iterator<[First<V>, [number, ...Rest<V>][]]> {
+export function* iterateAll<V extends AsTuple<V>>(...lists: ISortedList<V>[]): Generator<[First<V>, [number, ...Rest<V>][]]> {
     let iterators: [number, Iterator<AsTuple<V>>|null][] = [];
 
     // Using a heap would have been faster theoretically, but in practice lists.length is small.
