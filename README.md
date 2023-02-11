@@ -1,21 +1,52 @@
 # kshoot.js
 
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/123jimin/kshoot.js/build.yml?branch=main&style=flat-square)
+
+NOTE: this library is work in progress.
+
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania. This project supersedes [kson-js](https://github.com/123jimin/kson-js).
 
 This library is focused on having a simple, modular, and intuitive codebase with little dependency.
 
 Internally, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](https://github.com/qwertie/btree-typescript).
 
-## Warning
+## Progress
 
-Currently, kshoot.js is not ready to be used. The API is not yet stable.
+- KSH/KSON I/O
+  - [x] Reading KSH
+  - [x] Reading KSON
+  - [ ] Writing KSH
+  - [ ] Writing KSON
+  - [x] Metadata
+  - [x] Comments
+  - [x] Notes and lasers
+  - [ ] Audio effects
+  - [ ] Camera effects
+  - [ ] BG effects
+- Simple API
+  - [ ] Iterating each object in the chart
+  - [ ] Calculating median BPM
+- Auxillary features
+  - [ ] Radar
+  - [ ] Curved laser converter
+  - [ ] Linter
 
-I'll try my best to keep the code below working.
+## Chart file specs
+
+- [KSH Chart File Format Specification](https://github.com/m4saka/ksm-chart-format-spec/blob/master/ksh_format.md)
+- [KSON Format Specification](https://github.com/m4saka/ksm-chart-format-spec/blob/master/kson_format.md)
+
+## Examples
+
+### Basic data structure
+
+`Chart` implements `kson.Kson`, so be sure to read the KSON spec before using this library.
 
 ```ts
 import {parse, Chart, kson} from 'kshoot.js';
 
-// `Chart.parseKSON`, `Chart.parseKSH`, `parse`
+// `Chart.parseKSON`, `Chart.parseKSH`, `parse` for parsing a chart
+// Note that strings without BOMs are preferred.
 let chart: Chart = Chart.parseKSON("... (a valid KSON chart, with or without BOM) ...");
 chart = Chart.parseKSH("... (a valid KSH chart, with or without BOM) ...");
 chart = parse("... (either KSH or KSON chart, with or without BOM) ...");
@@ -25,14 +56,13 @@ const meta: kson.MetaInfo = chart.meta;
 const beat: kson.BeatInfo = chart.beat;
 const note: kson.NoteInfo = chart.note;
 
-// `Chart#note.bt`, `Chart#note.fx`, and `Chart#note.laser` will be iterable
+// Some lists such as note.bt/fx/laser and beat.bpm are not arrays,
+// but they are nevertheless iterable.
 for(const [y, len] of note.bt[0]) {
     /* ... */
 }
 
 ```
-
-## Example
 
 ### Counting notes
 
@@ -68,15 +98,13 @@ function reportChart(chart_filename) {
 ["./foo.ksh", "./bar.kson"].forEach(reportChart);
 ```
 
-## Chart file specs
-
-- [KSH Chart File Format Specification](https://github.com/m4saka/ksm-chart-format-spec/blob/master/ksh_format.md)
-- [KSON Format Specification](https://github.com/m4saka/ksm-chart-format-spec/blob/master/kson_format.md)
-
 ## Dependencies
+
+I want `kshoot` to have as little dependencies as possible. Some zero-dependency libraries are too cool to not use, though.
 
 ```text
 $ npm ls --prod --all
-kshoot@0.0.1
-`-- zod@3.20.2
+kshoot@0.0.2
+├── sorted-btree@1.8.1
+└── zod@3.20.6
 ```
