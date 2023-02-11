@@ -1,13 +1,16 @@
 import * as kson from "../kson/index.js";
 
 export interface MeasureInfo {
-    index: kson.MeasureIdx;
+    idx: kson.MeasureIdx;
+    pulse: kson.Pulse;
+    time_sig: Readonly<kson.TimeSig>;
     length: kson.Pulse;
-    beat: kson.Pulse;
+    beat_length: kson.Pulse;
 }
 
 export interface TimingInfo {
     pulse: kson.Pulse;
+    /** Time from the beginning of the chart, in milliseconds. */
     time: number;
     bpm: number;
     measure: MeasureInfo;

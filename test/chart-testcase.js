@@ -101,6 +101,86 @@ TEST("testcase/02-nov.ksh", function(ctx) {
     });
 });
 
+TEST("testcase/02-adv.ksh", function(ctx) {
+    it("should contain all note combinations", function() {
+        const {chart} = ctx;
+
+        const combination_counts = [];
+        for(let i=0; i<64; ++i) combination_counts[i] = 0;
+
+        let prev_pulse = -1n;
+        let prev_measure_idx = -1n;
+        let prev_time = -1;
+        for(const [timing_info, button_objects] of chart.buttonNotes()) {
+            assert.isTrue(prev_pulse < timing_info.pulse, "pulse should advance");
+            assert.isTrue(prev_time < timing_info.time, "time should advance");
+            assert.isTrue(prev_measure_idx === timing_info.measure.idx || prev_measure_idx + 1n === timing_info.measure.idx, "measure_idx should increase slowly");
+
+            [prev_pulse, prev_time, prev_measure_idx] = [timing_info.pulse, timing_info.time, timing_info.measure.idx];
+
+            assert.strictEqual(timing_info.bpm, 120, "bpm should stay constant");
+            assert.isTrue(timing_info.measure.pulse <= timing_info.pulse && timing_info.pulse < timing_info.measure.pulse + timing_info.measure.length, "measure pulse should be correct");
+            assert.deepStrictEqual(timing_info.measure.time_sig, [4, 4], "time signature should stay constant");
+            assert.strictEqual(timing_info.measure.length, 960n, "measure length should stay constant");
+            assert.strictEqual(timing_info.measure.beat_length, 240n, "measure beat length should stay constant");
+
+            assert.notEqual(button_objects.length, 0, "there should be at least 1 button");
+
+            switch(Number(timing_info.measure.idx)) {
+                case 0: case 1:
+                    assert.strictEqual(button_objects.length, 1, `correct chord for measure ${timing_info.measure.idx+1n}`);
+                    break;
+                case 2: case 3: case 4: case 5:
+                    assert.strictEqual(button_objects.length, 2, `correct chord for measure ${timing_info.measure.idx+1n}`);
+                    break;
+                case 6: case 7: case 8: case 9: case 10: case 11:
+                    assert.strictEqual(button_objects.length, 3, `correct chord for measure ${timing_info.measure.idx+1n}`);
+                    break;
+                case 12: case 13: case 14: case 15: case 16:
+                    assert.strictEqual(button_objects.length, 4, `correct chord for measure ${timing_info.measure.idx+1n}`);
+                    break;
+                case 17: case 18:
+                    assert.strictEqual(button_objects.length, 5, `correct chord for measure ${timing_info.measure.idx+1n}`);
+                    break;
+                case 19:
+                    assert.strictEqual(button_objects.length, 6, `correct chord for measure ${timing_info.measure.idx+1n}`);
+                    break;
+                default:
+                    assert.fail(`invalid measure ${timing_info.measure.idx+1n}`);
+            }
+
+            let x = 0;
+            for(const button_object of button_objects) {
+                assert.isTrue(0 <= button_object.lane && button_object.lane < 6, `${button_object.lane} should be a valid lane`);
+                assert.strictEqual(button_object.length, 0n, "all notes should be short");
+                x |= 1 << button_object.lane;
+            }
+
+            ++combination_counts[x];
+        }
+
+        for(let i=1; i<64; ++i) {
+            let desired_count = 1;
+
+            switch(i) {
+                case 0b01_0000:
+                case 0b10_0000:
+                case 0b11_0000:
+                case 0b01_1111:
+                case 0b10_1111:
+                    desired_count = 2;
+                    break;
+                case 0b00_1111:
+                case 0b11_1111:
+                    desired_count = 4;
+                    break;
+            }
+
+            assert.strictEqual(combination_counts[i], desired_count, `combination ${i} occurrences`);
+        }
+    });
+});
+
 TEST("testcase/03-nov.ksh", function(ctx) {
     it("should contain no note", function() {
         const {chart} = ctx;

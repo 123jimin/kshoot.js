@@ -54,15 +54,67 @@ export class Chart implements kson.Kson {
         this.setKSON(null);
     }
 
-    *buttonNotes(): Generator<[TimingInfo, ButtonObject[]]> {
-        for(const [pulse, buttons] of iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx)) {
-            // TODO: get timingInfo
-            const timing_info: TimingInfo = null as unknown as TimingInfo;
+    *attachTimingInfo<T>(it: IterableIterator<[kson.Pulse, T]>): Generator<[Readonly<TimingInfo>, T]> {
+        const bpm_it = this.beat.bpm[Symbol.iterator]();
+        const time_sig_it = this.beat.time_sig[Symbol.iterator]();
+
+        let {value: curr_bpm}: {value: kson.ByPulse<number>} = bpm_it.next();
+        let {value: next_bpm}: {value?: kson.ByPulse<number>} = bpm_it.next();
+
+        const {value: init_time_sig}: {value: kson.ByMeasureIdx<kson.TimeSig>} = time_sig_it.next();
+        let {value: next_time_sig}: {value?: kson.ByMeasureIdx<kson.TimeSig>} = time_sig_it.next();
+
+        const measure_info: MeasureInfo = {
+            idx: 0n, pulse: 0n, time_sig: init_time_sig[1],
+            length: (PULSES_PER_WHOLE * BigInt(init_time_sig[1][0])) / BigInt(init_time_sig[1][1]),
+            beat_length: PULSES_PER_WHOLE / BigInt(init_time_sig[1][1]),
+        };
+
+        let base_pulse = 0n;
+        let base_time = 0;
+
+        let time_divider = curr_bpm[1] * Number(PULSES_PER_WHOLE);
+
+        for(const [pulse, data] of it) {
+            if(next_bpm && pulse <= next_bpm[0]) {
+                base_time += Number(240_000n*(pulse-base_pulse))/time_divider;
+                base_pulse = pulse;
+                time_divider = next_bpm[1] * Number(PULSES_PER_WHOLE);
+
+                curr_bpm = next_bpm;
+                next_bpm = bpm_it.next().value;
+            }
+
+            let measure_idx = measure_info.idx + (pulse - measure_info.pulse) / measure_info.length;
+            if(next_time_sig && measure_idx <= next_time_sig[0]) {
+                measure_info.pulse = measure_info.pulse + (next_time_sig[0] - measure_info.idx) * measure_info.length;
+                measure_info.idx = next_time_sig[0];
+                measure_info.time_sig = next_time_sig[1];
+                measure_info.beat_length = PULSES_PER_WHOLE / BigInt(next_time_sig[1][1]);
+                measure_info.length = measure_info.beat_length * BigInt(next_time_sig[1][0]);
+                measure_idx = next_time_sig[0] + (pulse - measure_info.pulse) / measure_info.length;
+                next_time_sig  = time_sig_it.next().value;
+            }
+
+            measure_info.pulse += (measure_idx - measure_info.idx) * measure_info.length;
+            measure_info.idx = measure_idx;
+
+            yield [{
+                pulse,
+                time: base_time + Number(240_000n*(pulse - base_pulse))/time_divider,
+                bpm: curr_bpm[1],
+                measure: measure_info,
+            }, data];
+        }
+    }
+
+    *buttonNotes(): Generator<[Readonly<TimingInfo>, ButtonObject[]]> {
+        for(const [timing_info, buttons] of this.attachTimingInfo(iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx))) {
             yield [timing_info, buttons.map(([lane, length]) => ({lane, length}))];
         }
     }
 
-    *laserNotes(): Generator<[TimingInfo, LaserObject[]]> {
+    *laserNotes(): Generator<[Readonly<TimingInfo>, LaserObject[]]> {
         
     }
 
