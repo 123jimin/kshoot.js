@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import {SortedList} from "../dist/sorted-list.js";
+import {SortedList, iterateAll} from "../dist/sorted-list.js";
 
 function TEST_LIST(label, SortedList) {
     describe(label, function() {
@@ -94,6 +94,56 @@ function TEST_LIST(label, SortedList) {
                     prev_val = key;
                 }
             });
+        });
+
+        describe("iterateAll", function() {
+            const NUM_LISTS = 8;
+            const NUM_INTS = 1000;
+
+            const answer = [];
+            let lists = [];
+
+            for(let i=0; i<NUM_LISTS; ++i) {
+                lists.push([]);
+            }
+
+            for(let i=0; i<NUM_INTS; ++i) {
+                const row = [];
+                for(let j=0; j<NUM_LISTS; ++j) {
+                    if(Math.random() >= 0.5) continue;
+
+                    const random_value = Math.random().toString();
+                    lists[j].push([i, random_value]);
+                    row.push([j, random_value]);
+                }
+                if(row.length > 0) {
+                    answer.push([i, row]);
+                }
+            }
+
+            lists = lists.map((list) => {
+                let curr_ind = list.length;
+                let random_ind;
+
+                while(curr_ind > 0) {
+                    random_ind = 0|Math.random()*curr_ind--;
+
+                    [list[curr_ind], list[random_ind]] = [list[random_ind], list[curr_ind]];
+                }
+
+                return new SortedList(list);
+            });
+
+            const it = iterateAll(...lists);
+
+            for(const answer_row of answer) {
+                const {done, value} = it.next();
+
+                assert.isNotOk(done, "the iterator should have not yet ended");
+                assert.deepStrictEqual(value, answer_row);
+            }
+
+            assert.isTrue(it.next().done, "the iterator should have ended");
         });
     });
 }
