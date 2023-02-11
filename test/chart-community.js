@@ -3,6 +3,94 @@ import {assert} from 'chai';
 import {PULSES_PER_WHOLE, kson} from "../dist/index.js";
 import {TEST} from "./_common.js";
 
+TEST("community/hexagon-1.ksh", function(ctx) {
+    it("should have the correct metadata", function() {
+        const {chart} = ctx;
+
+        assert.strictEqual(chart.version, kson.VERSION);
+
+        assert.deepStrictEqual(chart.meta, {
+            title: "Astar",
+            artist: "黒皇帝",
+            chart_author: "HEXAGON",
+            jacket_filename: "Astar.png",
+            jacket_author: "HEXAGON",
+            difficulty: 3,
+            level: 19,
+            disp_bpm: "96-448",
+            std_bpm: 192,
+            information: "Every node has an admissible H.",
+        }, "meta must be equal");
+
+        assert.deepStrictEqual([...chart.beat.bpm], [
+            [0n, 192],
+            [34n * PULSES_PER_WHOLE, 96],
+            [38n * PULSES_PER_WHOLE, 144],
+            [44n * PULSES_PER_WHOLE, 384],
+            [47n * PULSES_PER_WHOLE, 448],
+            [48n * PULSES_PER_WHOLE - PULSES_PER_WHOLE/8n, 192],
+            [72n * PULSES_PER_WHOLE, 384],
+            [72n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/2n, 192],
+            [88n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/4n, 96],
+        ], "bpm must be equal");
+
+        assert.deepStrictEqual([...chart.beat.time_sig], [
+            [0n, [4, 4]],
+            [34n, [4, 8]],
+            [42n, [6, 8]],
+            [50n, [1, 4]],
+            [54n, [1, 8]],
+            [62n, [1, 12]],
+            [74n, [1, 16]],
+            [84n, [1, 4]],
+            [85n, [1, 8]],
+            [86n, [4, 4]],
+            [110n, [1, 8]],
+            [114n, [3, 4]],
+            [115n, [4, 4]],
+            [130n, [4, 8]],
+        ], "time_sig must be equal");
+        assert.deepStrictEqual([...chart.beat.scroll_speed], [[0n, [1, 1], [0, 0]]], "scroll_speed must be equal");
+
+        assert.deepStrictEqual(chart.gauge, {
+            total: 202,
+        }, "gauge must be equal");
+
+        assert.deepStrictEqual(chart.audio, {
+            bgm: {
+                filename: "Astar.mp3",
+                vol: 0.75,
+                offset: 100,
+                preview: {
+                    offset: 42540,
+                    duration: 22000,
+                },
+            },
+        }, "audio must be equal");
+    });
+
+    it("should have the correct auxillary info", function() {
+        const {chart} = ctx;
+
+        assert.deepStrictEqual([...chart.editor.comment], [
+            [2n * PULSES_PER_WHOLE, "A"],
+            [10n * PULSES_PER_WHOLE, "A'"],
+            [18n * PULSES_PER_WHOLE, "B"],
+            [26n * PULSES_PER_WHOLE, "B'"],
+            [44n * PULSES_PER_WHOLE, "Shaking"],
+            [64n * PULSES_PER_WHOLE, "D"],
+            [68n * PULSES_PER_WHOLE, "D'"],
+            [72n * PULSES_PER_WHOLE, "D''"],
+            [80n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/4n, "E"],
+        ], "comments must be equal");
+
+        assert.strictEqual(chart.compat.ksh_version, "160", "ksh_version must be equal");
+        assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
+        assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
+        assert.strictEqual(chart.compat.ksh_unknown.line.size, 0, "no unknown line");
+    });
+});
+
 TEST("community/lyrium-1.ksh", function(ctx) {
     it("should have the correct metadata", function() {
         const {chart} = ctx;
