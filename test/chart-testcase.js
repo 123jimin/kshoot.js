@@ -4,6 +4,42 @@ import {PULSES_PER_WHOLE, kson} from "../dist/index.js";
 import {TEST, assertLaserEqual} from "./_common.js";
 
 TEST("testcase/01-nov.ksh", function(ctx) {
+    it("should have the correct metadata", function() {
+        const {chart} = ctx;
+        
+        assert.strictEqual(chart.version, kson.VERSION);
+
+        assert.deepStrictEqual(chart.meta, {
+            title: "Testcase 01 [NOV]",
+            artist: "",
+            chart_author: "",
+            jacket_filename: ".jpg",
+            jacket_author: "",
+            difficulty: 0,
+            level: 1,
+            disp_bpm: "120",
+        }, "meta must be equal");
+
+        assert.deepStrictEqual([...chart.beat.bpm], [[0n, 120]], "bpm must be equal");
+        assert.deepStrictEqual([...chart.beat.time_sig], [[0n, [4, 4]]], "time_sig must be equal");
+        assert.deepStrictEqual([...chart.beat.scroll_speed], [[0n, [1, 1], [0, 0]]], "scroll_speed must be equal");
+        
+        assert.deepStrictEqual(chart.gauge, {
+            total: 0,
+        }, "gauge must be equal");
+
+        assert.deepStrictEqual(chart.audio, {
+            bgm: {
+                filename: ".mp3",
+                vol: 0.75,
+                offset: 0,
+                preview: {
+                    offset: 0,
+                    duration: 15000,
+                },
+            },
+        }, "audio must be equal");
+    });
 });
 
 TEST("testcase/02-nov.ksh", function(ctx) {
