@@ -11,6 +11,16 @@
             "request": "launch",
             "skipFiles": ["<node_internals>/**"],
             "type": "node"
+        },
+        {
+            "name": "kshoot",
+            "program": "dist/bin",
+            "args": ["test/chart/community/hexagon-1.ksh"],
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+            "internalConsoleOptions": "openOnSessionStart",
+            "request": "launch",
+            "type": "node"
         }
     ]
 }

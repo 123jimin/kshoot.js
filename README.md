@@ -24,8 +24,8 @@ Internally, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](htt
   - [ ] Camera effects
   - [ ] BG effects
 - Simple API
-  - [ ] Iterating each object in the chart
-  - [ ] Calculating median BPM
+  - [x] Iterating each note in the chart
+  - [x] Calculating median BPM
 - Auxillary features
   - [ ] Radar
   - [ ] Curved laser converter

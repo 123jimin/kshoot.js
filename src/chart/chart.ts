@@ -40,6 +40,47 @@ export class Chart implements kson.Kson {
     get editor(): ChartEditorInfo { return this._editor ?? (this._editor = kson.schema.EditorInfo.parse({})); }
     compat?: ChartCompatInfo;
     impl?: unknown;
+    
+    /** Get a string representation of the difficulty */
+    get difficulty_str(): string {
+        const difficulty = this.meta.difficulty;
+        if(typeof difficulty !== "string") {
+            switch(difficulty) {
+                case 0: return 'light';
+                case 1: return 'challenge';
+                case 2: return 'extended';
+                case 3: return 'infinite';
+                default: return `${difficulty}`;
+            }
+        }
+        return difficulty;
+    }
+
+    /** Get an id representation (NOV, ADV, ...) of the difficulty */
+    get difficulty_id(): string {
+        const difficulty = this.meta.difficulty;
+        let difficulty_str = "";
+        if(typeof difficulty === 'string') {
+            difficulty_str = difficulty.toUpperCase();
+        } else {
+            switch(difficulty) {
+                case 0: return 'NOV';
+                case 1: return 'ADV';
+                case 2: return 'EXH';
+                case 3: return 'MXM';
+                default: return `${difficulty}`;
+            }
+        }
+
+        switch(difficulty_str) {
+            case 'MAXIMUM': return 'MXM';
+            case 'GRAVITY': return 'GRV';
+            case 'HEAVEN': case 'HEAVENLY': return 'HVN';
+            case 'VIVID': return 'VVD';
+            case 'EXCEED': return 'XCD';
+            default: return difficulty_str.slice(0, 3);
+        }
+    }
 
     /**
      * Creates a chart object, optionally initialized to given KSON data.
@@ -64,11 +105,11 @@ export class Chart implements kson.Kson {
         const bpm_it = this.beat.bpm[Symbol.iterator]();
         const time_sig_it = this.beat.time_sig[Symbol.iterator]();
 
-        let {value: curr_bpm}: {value: kson.ByPulse<number>} = bpm_it.next();
-        let {value: next_bpm}: {value?: kson.ByPulse<number>} = bpm_it.next();
+        let curr_bpm: kson.ByPulse<number> = bpm_it.next().value;
+        let next_bpm: kson.ByPulse<number>|undefined = bpm_it.next().value;
 
-        const {value: init_time_sig}: {value: kson.ByMeasureIdx<kson.TimeSig>} = time_sig_it.next();
-        let {value: next_time_sig}: {value?: kson.ByMeasureIdx<kson.TimeSig>} = time_sig_it.next();
+        const init_time_sig: kson.ByMeasureIdx<kson.TimeSig> = time_sig_it.next().value;
+        let next_time_sig: kson.ByMeasureIdx<kson.TimeSig>|undefined = time_sig_it.next().value;
 
         const measure_info: MeasureInfo = {
             idx: 0n, pulse: 0n, time_sig: init_time_sig[1],
@@ -129,13 +170,16 @@ export class Chart implements kson.Kson {
 
     *laserNotes(lane?: 0|1): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
         if(lane == null) {
-            return iterateAll<[Pulse, LaserObject]>(this.laserNotes(0), this.laserNotes(1));
+            for(const [pulse, lasers] of iterateAll<[Pulse, LaserObject]>(this.laserNotes(0), this.laserNotes(1))) {
+                yield [pulse, lasers.map((laser) => laser[1])];
+            }
+            return;
         }
 
         for(const [pulse, laser_sections, width] of this.note.laser[lane]) {
             const section_it = laser_sections[Symbol.iterator]();
-            let {value: curr_section}: {value: kson.GraphSectionPoint} = section_it.next();
-            let {value: next_section}: {value?: kson.GraphSectionPoint} = section_it.next();
+            let curr_section: kson.GraphSectionPoint = section_it.next().value;
+            let next_section: kson.GraphSectionPoint|undefined = section_it.next().value;
 
             while(true) {
                 const length: kson.Pulse = next_section ? next_section[0] - curr_section[0] : 0n;
