@@ -25,7 +25,7 @@ const parseOption = (chunk: string): [string, string] => {
     return [tokens[0], tokens.slice(1).join('=')];
 };
 
-const parseSpinHead = (spin_head: string): Omit<LaneSpin, 'length'>|null => {
+const parseSpinHead = (spin_head: string): Pick<LaneSpin, 'type'|'direction'>|null => {
     switch(spin_head) {
         case '@(': return {type: 'normal', direction: 'left'};
         case '@)': return {type: 'normal', direction: 'right'};
@@ -102,7 +102,7 @@ export default class Reader implements Chart {
         this._curr_time_signature = [numerator, denominator];
     }
 
-    private _handleMeasure(chart_line_count: bigint, lines: Exclude<Line, BarLine>[]): OptionLine[] {
+    private _handleMeasure(chart_line_count: bigint, lines: Exclude<Line, BarLine>[], chunk_start_line_no: number): OptionLine[] {
         if(chart_line_count === 0n) {
             chart_line_count = 1n;
             lines.push({
@@ -155,7 +155,7 @@ export default class Reader implements Chart {
                     curr_line.options = [];
 
                     if(measure.length % chart_line_count !== 0n) {
-                        throw new Error(`Invalid line count`);
+                        throw new Error(`Invalid line count (measure ${this.measures.length+1}, line ${chunk_start_line_no}): ${chart_line_count} lines for a measure with ${measure.length} pulses`);
                     }
 
                     curr_line.pulse += measure.length / chart_line_count;
@@ -211,7 +211,11 @@ export default class Reader implements Chart {
         let is_header = true;
         let chunk: Exclude<Line, BarLine>[] = [];
         let lines_per_measure = 0n;
+        let line_no = 0;
+        let chunk_start_line_no = 1;
         for(const line_str of chart_str.split("\n")) {
+            ++line_no;
+
             if(/^\s*$/.test(line_str)) continue;
 
             const line = Reader.parseLine(line_str);
@@ -230,10 +234,11 @@ export default class Reader implements Chart {
 
             if(line.type === 'bar') {
                 if(is_header) chunk = reader._handleHeader(chunk);
-                else chunk = reader._handleMeasure(lines_per_measure, chunk);
+                else chunk = reader._handleMeasure(lines_per_measure, chunk, chunk_start_line_no);
 
                 is_header = false;
                 lines_per_measure = 0n;
+                chunk_start_line_no = line_no + 1;
                 continue;
             }
 
@@ -246,7 +251,7 @@ export default class Reader implements Chart {
 
         if(chunk.length > 0) {
             if(is_header) reader._handleHeader(chunk);
-            else reader._handleMeasure(lines_per_measure, chunk);
+            else reader._handleMeasure(lines_per_measure, chunk, chunk_start_line_no);
         }
 
         return reader;
@@ -281,7 +286,12 @@ export default class Reader implements Chart {
             };
         }
         
-        match = line.match(/^([012]{4})\|([012A-Z]{2})\|([0-9A-Za-o\-:]{2})(?:(@[()<>]|S[<>])(\d+))?$/);
+        if(line.includes('=')) {
+            const [option_name, option_value] = parseOption(line);
+            return {type: 'option', name: option_name, value: option_value};
+        }
+        
+        match = line.match(/^([012]{4})\|([012A-Z]{2})\|([0-9A-Za-o\-:]{2})(?:(@[()<>]|S[<>])([^;]+)(?:;(.+))?)?/);
         if(match) {
             let line: ChartLine|ChartLineWithLegacyFX = {type: 'chart'};
 
@@ -309,21 +319,41 @@ export default class Reader implements Chart {
 
             if(match[4] && match[5]) {
                 const spin_head = parseSpinHead(match[4]);
+                const safeParseInt = (v: string) => {
+                    const w = parseInt(v, 10);
+                    if(Number.isSafeInteger(w) && w >= 0) return w;
+                    return 0;
+                };
 
                 if(spin_head) {
-                    line.spin = {
-                        ...spin_head,
-                        length: parseInt(match[5]),
-                    };
+                    switch(spin_head.type) {
+                        case 'normal':
+                        case 'half':
+                            line.spin = {
+                                type: spin_head.type,
+                                direction: spin_head.direction,
+                                length: safeParseInt(match[5]),
+                            };
+                            break;
+                        case 'swing': {
+                            const args = (match[6] ?? '').split(';');
+                            line.spin = {
+                                type: 'swing',
+                                direction: spin_head.direction,
+                                length: safeParseInt(match[5]),
+                                amplitude: safeParseInt(args[0] != null && args[0].trim() ? args[0] : '250'),
+                                repeat: safeParseInt(args[1] != null && args[1].trim() ? args[1] : '3'),
+                                decay: ((decay: number) => {
+                                    if(decay > 2) return 'normal'; return (['off', 'slow', 'normal'] as const)[decay] ?? 'off';
+                                })(safeParseInt(args[2] != null && args[2].trim() ? args[2] : '2')),
+                            }
+                            break;
+                        }
+                    }
                 }
             }
 
             return line;
-        }
-
-        if(line.includes('=')) {
-            const [option_name, option_value] = parseOption(line);
-            return {type: 'option', name: option_name, value: option_value};
         }
 
         return {

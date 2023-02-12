@@ -14,7 +14,8 @@ const args = parser.parse_args();
 
 let chart_buffer: Buffer;
 try {
-    chart_buffer = await fs.readFile(path.join(process.cwd(), args.filename));
+    const chart_path = path.isAbsolute(args.filename) ? args.filename : path.join(process.cwd(), args.filename);
+    chart_buffer = await fs.readFile(chart_path);
 } catch(e: unknown) {
     console.error(`${e}`);
     process.exit(1);

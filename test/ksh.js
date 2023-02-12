@@ -62,40 +62,40 @@ describe('ksh.Reader', function() {
         });
 
         it("should be able to parse chart lines correctly", function() {
-            assert.deepInclude(ksh.Reader.parseLine("0000|00|--"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("0000|00|--"), {
                 type: 'chart',
             }, "parsing empty line");
 
-            assert.deepInclude(ksh.Reader.parseLine("1201|00|--"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("1201|00|--"), {
                 type: 'chart', bt: [ksh.NoteKind.Short, ksh.NoteKind.Long, ksh.NoteKind.Empty, ksh.NoteKind.Short],
             }, "parsing simple line (BT only)");
             
-            assert.deepInclude(ksh.Reader.parseLine("0000|10|0o"), {
-                type: 'chart', fx: [ksh.NoteKind.Long, ksh.NoteKind.Empty],
+            assert.deepStrictEqual(ksh.Reader.parseLine("0000|10|0o"), {
+                type: 'chart', fx: [ksh.NoteKind.Long, ksh.NoteKind.Empty], laser: [0, 50],
             }, "parsing simple line (FX only)");
             
-            assert.deepInclude(ksh.Reader.parseLine("0000|00|-:"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("0000|00|-:"), {
                 type: 'chart', laser: [null, ':'],
             }, "parsing simple line (laser only, special)");
             
-            assert.deepInclude(ksh.Reader.parseLine("0000|00|AU"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("0000|00|AU"), {
                 type: 'chart', laser: [10, 30],
             }, "parsing simple line (laser only, pos)");
             
-            assert.deepInclude(ksh.Reader.parseLine("0120|21|0o"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("0120|21|0o"), {
                 type: 'chart',
                 bt: [ksh.NoteKind.Empty, ksh.NoteKind.Short, ksh.NoteKind.Long, ksh.NoteKind.Empty],
                 fx: [ksh.NoteKind.Short, ksh.NoteKind.Long],
                 laser: [0, 50],
             }, "parsing simple line");
             
-            assert.deepInclude(ksh.Reader.parseLine("0000|FI|--"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("0000|FI|--"), {
                 type: 'chart',
                 fx: [ksh.NoteKind.Long, ksh.NoteKind.Long],
                 legacy_fx: ["Flanger", "Gate;16"],
             }, "parsing legacy FXs (Flanger and Gate16)");
 
-            assert.deepInclude(ksh.Reader.parseLine("0000|A1|--"), {
+            assert.deepStrictEqual(ksh.Reader.parseLine("0000|A1|--"), {
                 type: 'chart',
                 fx: [ksh.NoteKind.Long, ksh.NoteKind.Long],
                 legacy_fx: ["TapeStop", null],
@@ -106,13 +106,17 @@ describe('ksh.Reader', function() {
                 ["@)34", {type: 'normal', direction: 'right', length: 34}],
                 ["@<56", {type: 'half', direction: 'left', length: 56}],
                 ["@>78", {type: 'half', direction: 'right', length: 78}],
-                ["S<90", {type: 'swing', direction: 'left', length: 90}],
-                ["S>192", {type: 'swing', direction: 'right', length: 192}],
+                ["S<90", {type: 'swing', direction: 'left', length: 90, amplitude: 250, repeat: 3, decay: 'normal'}],
+                ["S>192;111", {type: 'swing', direction: 'right', length: 192, amplitude: 111, repeat: 3, decay: 'normal'}],
+                ["S<42.6;222;5", {type: 'swing', direction: 'left', length: 42, amplitude: 222, repeat: 5, decay: 'normal'}],
+                ["S>321.2;123.4;56.7;1", {type: 'swing', direction: 'right', length: 321, amplitude: 123, repeat: 56, decay: 'slow'}],
+                ["S<1;-2;3;0", {type: 'swing', direction: 'left', length: 1, amplitude: 0, repeat: 3, decay: 'off'}],
+                ["S>4;5;6;7", {type: 'swing', direction: 'right', length: 4, amplitude: 5, repeat: 6, decay: 'normal'}],
             ]) {
-                assert.deepInclude(ksh.Reader.parseLine("0000|00|--" + test_in), {
+                assert.deepStrictEqual(ksh.Reader.parseLine("0000|00|--" + test_in), {
                     type: 'chart',
                     spin: test_out,
-                }, "parsing spins");
+                }, `parsing spin "${test_in}"`);
             }
         });
 

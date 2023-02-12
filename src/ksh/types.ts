@@ -139,11 +139,27 @@ export interface UnknownLine {
 /** Each line from a KSH chart, with minimally parsed data. */
 export type Line = BarLine | CommentLine | OptionLine | ChartLine | AudioEffectLine | UnknownLine;
 
-export interface LaneSpin {
-    type: 'normal' | 'half' | 'swing';
+export interface LaneSpinCommon {
     direction: 'left' | 'right';
     length: number;
 }
+
+export interface LaneSpinNormal extends LaneSpinCommon {
+    type: 'normal';
+}
+
+export interface LaneSpinHalf extends LaneSpinCommon {
+    type: 'half';
+}
+
+export interface LaneSpinSwing extends LaneSpinCommon {
+    type: 'swing'
+    amplitude: number;
+    repeat: number;
+    decay: 'normal'|'slow'|'off';
+}
+
+export type LaneSpin = LaneSpinNormal | LaneSpinHalf | LaneSpinSwing;
 
 export const LASER_POS_TO_CHAR = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno";
 export const LASER_CHAR_NONE = '-';
