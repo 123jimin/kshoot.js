@@ -1,10 +1,13 @@
 import type {z} from 'zod';
+import type {IMapSource} from 'sorted-btree';
 
-import {iterateAll} from "../util.js";
+import {iterateAll, min, max} from "../util.js";
 
 import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
 import {default as readKSH} from "./read-ksh.js";
+
+export * from "./object.js";
 import type {
     MeasureInfo, TimingInfo,
     ButtonObject, LaserObject,
@@ -54,6 +57,9 @@ export class Chart implements kson.Kson {
         this.setKSON(null);
     }
 
+    /* Iterators */
+
+    /** Converts an iterator of `[Pulse, ...]` into `[TimingInfo, ...]`. */
     *withTimingInfo<T>(it: IterableIterator<[kson.Pulse, T]>): Generator<[Readonly<TimingInfo>, T]> {
         const bpm_it = this.beat.bpm[Symbol.iterator]();
         const time_sig_it = this.beat.time_sig[Symbol.iterator]();
@@ -107,14 +113,18 @@ export class Chart implements kson.Kson {
             }, data];
         }
     }
-
+    
+    /** Iterates through all button objects, grouped by chords. */
     *buttonNotes(): Generator<[Pulse, ButtonObject[]]> {
         for(const [pulse, buttons] of iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx)) {
             yield [pulse, buttons.map(([lane, length]) => ({lane, length}))];
         }
     }
 
+    /** Iterates through each laser segment, with lane (`0`: left, `1`: right) specified. */
     laserNotes(lane: 0|1): Generator<[Pulse, LaserObject]>;
+    
+    /** Iterates through each laser segment. */
     laserNotes(): Generator<[Pulse, LaserObject[]]>;
 
     *laserNotes(lane?: 0|1): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
@@ -129,11 +139,15 @@ export class Chart implements kson.Kson {
 
             while(true) {
                 const length: kson.Pulse = next_section ? next_section[0] - curr_section[0] : 0n;
-                yield [pulse + curr_section[0], {
-                    section_pulse: pulse,
-                    lane, width, length,
-                    v: curr_section[1], curve: curr_section[2],
-                }];
+
+                if(length > 0n || curr_section[1][0] !== curr_section[1][1]) {
+                    yield [pulse + curr_section[0], {
+                        section_pulse: pulse,
+                        lane, width, length,
+                        v: curr_section[1], ve: next_section ? next_section[1][0] : curr_section[1][1],
+                        curve: curr_section[2],
+                    }];
+                }
                 
                 if(!next_section) break;
                 curr_section = next_section;
@@ -141,6 +155,8 @@ export class Chart implements kson.Kson {
             }
         }
     }
+
+    /* Chart editing */
 
     /**
      * Sets the BPM for the given pulse.
@@ -192,6 +208,80 @@ export class Chart implements kson.Kson {
     addComment(pulse: Pulse, comment: string) {
         this.editor.comment.push([pulse, comment]);
     }
+
+    /* Utility functions */
+
+    getFirstNotePulse(): kson.Pulse {
+        return min(
+            ...this.note.bt.map((notes) => notes.minKey() ?? 0n),
+            ...this.note.fx.map((notes) => notes.minKey() ?? 0n),
+            ...this.note.laser.map((notes) => notes.minKey() ?? 0n),
+        ) ?? 0n;
+    }
+
+    getLastNotePulse(): kson.Pulse {
+        return max(
+            ...this.note.bt.map((notes) => notes.maxKey() ?? 0n),
+            ...this.note.fx.map((notes) => notes.maxKey() ?? 0n),
+            ...this.note.laser.map((notes) => notes.maxKey() ?? 0n),
+        ) ?? 0n;
+    }
+
+    /** Get total duration and a map containing durations for each BPM. */
+    getBPMDurationMap(): [number, IMapSource<number, number>] {
+        const first_pulse = this.getFirstNotePulse();
+        const last_pulse = this.getLastNotePulse();
+
+        const bpm_duration = new Map<number, number>();
+        let curr_bpm = 120;
+        let curr_pulse = 0n;
+        let total_duration = 0;
+
+        for(const [pulse, bpm] of this.beat.bpm) {
+            if(pulse > curr_pulse) {
+                let next_pulse = pulse;
+                if(curr_pulse < first_pulse) curr_pulse = first_pulse;
+                if(next_pulse > last_pulse) next_pulse = last_pulse;
+                if(curr_pulse < next_pulse) {
+                    const duration = Number(240_000n * (next_pulse - curr_pulse)) / (curr_bpm * Number(PULSES_PER_WHOLE));
+                    const prev_duration = bpm_duration.get(curr_bpm) ?? 0;
+                    bpm_duration.set(curr_bpm, prev_duration + duration);
+                    total_duration += duration;
+                }
+            }
+            [curr_pulse, curr_bpm] = [pulse, bpm];
+        }
+
+        if(curr_pulse < first_pulse) curr_pulse = first_pulse;
+        if(curr_pulse < last_pulse) {
+            const duration = Number(240_000n * (last_pulse - curr_pulse)) / (curr_bpm * Number(PULSES_PER_WHOLE));
+            const prev_duration = bpm_duration.get(curr_bpm) ?? 0;
+            bpm_duration.set(curr_bpm, prev_duration + duration);
+            total_duration += duration;
+        }
+
+        return [total_duration, bpm_duration];
+    }
+
+    /** Calculates the median BPM for this chart, which can be used in place of `meta.std_bpm`. */
+    getMedianBPM(): number {
+        const [total_duration, bpm_duration] = this.getBPMDurationMap();
+        if(bpm_duration.size === 0) return 120;
+
+        const half_duration = total_duration / 2;
+        let curr_duration = 0;
+        let last_bpm = 120;
+
+        for(const [bpm, duration] of [...bpm_duration.entries()].sort(([bpm_x], [bpm_y]) => bpm_x-bpm_y)) {
+            curr_duration += duration;
+            last_bpm = bpm;
+            if(curr_duration >= half_duration) break;
+        }
+
+        return last_bpm;
+    }
+
+    /* Data */
 
     /**
      * Set the chart data to given KSON object.

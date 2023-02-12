@@ -64,3 +64,25 @@ export function* iterateAll<V extends AsTuple<V>>(...lists: (Iterable<V>|Iterato
         if(one_ended) iterators = iterators.filter(([_, it]) => it != null)
     }
 }
+
+export function min<T>(...values: T[]): T|undefined {
+    if(values.length === 0) return void 0;
+
+    let curr_min = values[0];
+    for(let i=1; i<values.length; ++i) {
+        if(values[i] < curr_min) curr_min = values[i];
+    }
+
+    return curr_min;
+}
+
+export function max<T>(...values: T[]): T|undefined {
+    if(values.length === 0) return void 0;
+
+    let curr_max = values[0];
+    for(let i=1; i<values.length; ++i) {
+        if(curr_max < values[i]) curr_max = values[i];
+    }
+
+    return curr_max;
+}

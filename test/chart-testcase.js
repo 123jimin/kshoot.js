@@ -241,5 +241,17 @@ TEST("testcase/03-nov.ksh", function(ctx) {
         ]];
 
         assertLaserEqual(chart.note.laser, LASERS);
+
+        assert.deepStrictEqual([...chart.laserNotes(0)], [
+            [0n, {section_pulse: 0n, lane: 0, width: 1, length: PULSES_PER_WHOLE/4n, v: [0, 0], ve: 0, curve: [0, 0]}],
+            [PULSES_PER_WHOLE, {section_pulse: PULSES_PER_WHOLE, lane: 0, width: 1, length: PULSES_PER_WHOLE/4n, v: [0, 0], ve: 1, curve: [0, 0]}],
+            [2n*PULSES_PER_WHOLE, {section_pulse: 2n*PULSES_PER_WHOLE, lane: 0, width: 1, length: PULSES_PER_WHOLE/8n, v: [0, 0], ve: 1, curve: [0, 0]}],
+            [2n*PULSES_PER_WHOLE+PULSES_PER_WHOLE/8n, {section_pulse: 2n*PULSES_PER_WHOLE, lane: 0, width: 1, length: PULSES_PER_WHOLE/8n, v: [1, 1], ve: 0, curve: [0, 0]}],
+            [2n*PULSES_PER_WHOLE+PULSES_PER_WHOLE/4n, {section_pulse: 2n*PULSES_PER_WHOLE, lane: 0, width: 1, length: PULSES_PER_WHOLE/8n, v: [0, 0], ve: 0.5, curve: [0, 0]}],
+            [2n*PULSES_PER_WHOLE+3n*PULSES_PER_WHOLE/8n, {section_pulse: 2n*PULSES_PER_WHOLE, lane: 0, width: 1, length: PULSES_PER_WHOLE/8n, v: [0.5, 0.5], ve: 0, curve: [0, 0]}],
+            [3n*PULSES_PER_WHOLE, {section_pulse: 3n*PULSES_PER_WHOLE, lane: 0, width: 1, length: 0n, v: [0, 1], ve: 1, curve: [0, 0]}],
+            [5n*PULSES_PER_WHOLE, {section_pulse: 5n*PULSES_PER_WHOLE, lane: 0, width: 1, length: PULSES_PER_WHOLE/4n, v: [0, 1], ve: 0, curve: [0, 0]}],
+            [5n*PULSES_PER_WHOLE+PULSES_PER_WHOLE/4n, {section_pulse: 5n*PULSES_PER_WHOLE, lane: 0, width: 1, length: 0n, v: [0, 1], ve: 1, curve: [0, 0]}],
+        ]);
     });
 });

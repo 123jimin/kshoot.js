@@ -89,6 +89,18 @@ TEST("community/hexagon-1.ksh", function(ctx) {
         assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
         assert.strictEqual(chart.compat.ksh_unknown.line.size, 0, "no unknown line");
     });
+
+    it("should have the correct median BPM", function() {
+        const {chart} = ctx;
+        
+        assert.strictEqual(chart.getFirstNotePulse(), 0n, "the first note's pulse");
+        assert.strictEqual(chart.getLastNotePulse(), 91n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/4n, "the last note's pulse");
+        assert.strictEqual(chart.getMedianBPM(), 192, "median BPM should be 192");
+        
+        const [total_duration, bpm_duration] = chart.getBPMDurationMap();
+        assert.approximately(total_duration, 98 * 240000/192, 0.1, "total_duration should be 98 measures (in 192BPM)");
+        assert.deepStrictEqual([...bpm_duration.keys()].sort((x, y) => x-y), [96, 144, 192, 384, 448], "There should be 5 BPMs");
+    });
 });
 
 TEST("community/lyrium-1.ksh", function(ctx) {
