@@ -99,7 +99,65 @@ TEST("community/hexagon-1.ksh", function(ctx) {
         
         const [total_duration, bpm_duration] = chart.getBPMDurationMap();
         assert.approximately(total_duration, 98 * 240000/192, 0.1, "total_duration should be 98 measures (in 192BPM)");
-        assert.deepStrictEqual([...bpm_duration.keys()].sort((x, y) => x-y), [96, 144, 192, 384, 448], "There should be 5 BPMs");
+        assert.deepStrictEqual([...bpm_duration.keys()].sort((x, y) => x-y), [96, 144, 192, 384, 448], "there should be 5 BPMs");
+    });
+
+    it("should give correct measure info (by measure index)", function() {
+        const {chart} = ctx;
+
+        assert.deepStrictEqual(chart.getMeasureInfoByIdx(0n), {
+            idx: 0n, pulse: 0n, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "measure_idx = 0");
+        
+        assert.deepStrictEqual(chart.getMeasureInfoByIdx(20n), {
+            idx: 20n, pulse: 20n * PULSES_PER_WHOLE, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "measure_idx = 20");
+        
+        assert.deepStrictEqual(chart.getMeasureInfoByIdx(38n), {
+            idx: 38n, pulse: 36n * PULSES_PER_WHOLE, time_sig: [4, 8],
+            length: PULSES_PER_WHOLE / 2n, beat_length: PULSES_PER_WHOLE / 8n,
+        }, "measure_idx = 38");
+
+        assert.deepStrictEqual(chart.getMeasureInfoByIdx(86n), {
+            idx: 86n, pulse: 48n * PULSES_PER_WHOLE, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "measure_idx = 86");
+        
+        assert.deepStrictEqual(chart.getMeasureInfoByIdx(114n), {
+            idx: 114n, pulse: 72n * PULSES_PER_WHOLE + PULSES_PER_WHOLE / 2n, time_sig: [3, 4],
+            length: (3n * PULSES_PER_WHOLE) / 4n, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "measure_idx = 114");
+    });
+
+    it("should give correct measure info (by pulse)", function() {
+        const {chart} = ctx;
+
+        assert.deepStrictEqual(chart.getMeasureInfoByPulse(0n), {
+            idx: 0n, pulse: 0n, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "pulse = 0");
+
+        assert.deepStrictEqual(chart.getMeasureInfoByPulse(24n * PULSES_PER_WHOLE), {
+            idx: 24n, pulse: 24n * PULSES_PER_WHOLE, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "pulse = 24W");
+
+        assert.deepStrictEqual(chart.getMeasureInfoByPulse(24n * PULSES_PER_WHOLE + 42n), {
+            idx: 24n, pulse: 24n * PULSES_PER_WHOLE, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "pulse = 24W + 42");
+
+        assert.deepStrictEqual(chart.getMeasureInfoByPulse(36n * PULSES_PER_WHOLE), {
+            idx: 38n, pulse: 36n * PULSES_PER_WHOLE, time_sig: [4, 8],
+            length: PULSES_PER_WHOLE / 2n, beat_length: PULSES_PER_WHOLE / 8n,
+        }, "pulse = 36W");
+
+        assert.deepStrictEqual(chart.getMeasureInfoByPulse(76n * PULSES_PER_WHOLE), {
+            idx: 117n, pulse: 75n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/4n, time_sig: [4, 4],
+            length: PULSES_PER_WHOLE, beat_length: PULSES_PER_WHOLE / 4n,
+        }, "pulse = 76W");
     });
 });
 

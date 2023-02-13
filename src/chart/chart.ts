@@ -1,6 +1,7 @@
 import type {z} from 'zod';
 import type {IMapSource} from 'sorted-btree';
 
+import type {SortedList} from "../sorted-list.js";
 import {iterateAll, min, max} from "../util.js";
 
 import * as ksh from "../ksh/index.js";
@@ -15,12 +16,17 @@ import type {
 } from "./object.js";
 
 export type Pulse = kson.Pulse;
+export type PulseRange = [begin: Pulse, end: Pulse];
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
+
+export type MeasureIdx = kson.MeasureIdx;
 
 type ChartMetaInfo = z.output<typeof kson.schema.MetaInfo>;
 type ChartBeatInfo = z.output<typeof kson.schema.BeatInfo>;
 type ChartGaugeInfo = z.output<typeof kson.schema.GaugeInfo>;
 type ChartNoteInfo = z.output<typeof kson.schema.NoteInfo>;
+type ChartLaserSection = z.output<typeof kson.schema.LaserSection>;
+type ChartLaserSectionPoints = ChartLaserSection[1];
 type ChartAudioInfo = z.output<typeof kson.schema.AudioInfo>;
 type ChartEditorInfo = z.output<typeof kson.schema.EditorInfo>;
 type ChartCompatInfo = z.output<typeof kson.schema.CompatInfo>;
@@ -155,47 +161,90 @@ export class Chart implements kson.Kson {
         }
     }
     
-    /** Iterates through all button objects, grouped by chords. */
-    *buttonNotes(): Generator<[Pulse, ButtonObject[]]> {
-        for(const [pulse, buttons] of iterateAll<kson.ButtonNote>(...this.note.bt, ...this.note.fx)) {
+    /**
+     * Iterates through all button objects, grouped by chords.
+     * @param [range] Only retrieve the buttons contained in this range, including the beginning but excluding the end of range.
+     *  Long notes that are partially included in the range will also be included.
+     * @yields {[Pulse, ButtonObject[]]} Pairs of pulse and button objects (chord)
+     */
+    *buttonNotes(range?: PulseRange): Generator<[Pulse, ButtonObject[]]> {
+        const generators: Generator<kson.ButtonNote>[] = [...this.note.bt, ...this.note.fx].map(function* (notes: SortedList<kson.ButtonNote>): Generator<kson.ButtonNote> {
+            if(!range) {
+                for(const note of notes[Symbol.iterator]()) yield note;
+                return;
+            }
+            
+            // Check if there's a long note including the begin of the range
+            const prev_note = notes.nextLowerPair(range[0]);
+            if(prev_note && range[0] <= prev_note[0] + prev_note[1][0]) {
+                yield [prev_note[0], ...prev_note[1]];
+            }
+
+            for(const [pulse, note] of notes.getRange(range[0], range[1], false)) {
+                yield [pulse, ...note];
+            }
+        });
+
+        for(const [pulse, buttons] of iterateAll<kson.ButtonNote>(...generators)) {
             yield [pulse, buttons.map(([lane, length]) => ({lane, length}))];
         }
     }
 
     /** Iterates through each laser segment, with lane (`0`: left, `1`: right) specified. */
-    laserNotes(lane: 0|1): Generator<[Pulse, LaserObject]>;
-    
+    laserNotes(lane: 0|1, range?: PulseRange): Generator<[Pulse, LaserObject]>;
     /** Iterates through each laser segment. */
-    laserNotes(): Generator<[Pulse, LaserObject[]]>;
+    laserNotes(range?: PulseRange): Generator<[Pulse, LaserObject[]]>;
 
-    *laserNotes(lane?: 0|1): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
-        if(lane == null) {
-            for(const [pulse, lasers] of iterateAll<[Pulse, LaserObject]>(this.laserNotes(0), this.laserNotes(1))) {
+    *laserNotes(lane_or_range?: 0|1|PulseRange, range?: PulseRange): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
+        if(lane_or_range == null || Array.isArray(lane_or_range)) {
+            for(const [pulse, lasers] of iterateAll<[Pulse, LaserObject]>(this.laserNotes(0, lane_or_range), this.laserNotes(1, lane_or_range))) {
                 yield [pulse, lasers.map((laser) => laser[1])];
             }
             return;
         }
 
-        for(const [pulse, laser_sections, width] of this.note.laser[lane]) {
-            const section_it = laser_sections[Symbol.iterator]();
+        const lasers = this.note.laser[lane_or_range];
+        const handleSection = function*([pulse, [section_points, width]]: [Pulse, [ChartLaserSectionPoints, number]]): Generator<[Pulse, LaserObject]> {
+            // TODO: handle the case where the laser section overlaps with the beginning of the range
+
+            const section_it = section_points[Symbol.iterator]();
             let curr_section: kson.GraphSectionPoint = section_it.next().value;
             let next_section: kson.GraphSectionPoint|undefined = section_it.next().value;
 
             while(true) {
+                if(range && range[1]-pulse <= curr_section[0]) return;
                 const length: kson.Pulse = next_section ? next_section[0] - curr_section[0] : 0n;
 
-                if(length > 0n || curr_section[1][0] !== curr_section[1][1]) {
-                    yield [pulse + curr_section[0], {
-                        section_pulse: pulse,
-                        lane, width, length,
-                        v: curr_section[1], ve: next_section ? next_section[1][0] : curr_section[1][1],
-                        curve: curr_section[2],
-                    }];
+                if(range == null || range[0] <= pulse+curr_section[0]+length) {
+                    if (length > 0n || curr_section[1][0] !== curr_section[1][1]) {
+                        yield [pulse + curr_section[0], {
+                            section_pulse: pulse,
+                            lane: lane_or_range, width, length,
+                            v: curr_section[1], ve: next_section ? next_section[1][0] : curr_section[1][1],
+                            curve: curr_section[2],
+                        }];
+                    }
                 }
                 
                 if(!next_section) break;
                 curr_section = next_section;
                 next_section = section_it.next().value;
+            }
+        };
+
+        if(range) {
+            // Check if there's a laser note including the begin of the range
+            const first_section = lasers.nextLowerPair(range[0]);
+            if(first_section) for(const laser_object of handleSection(first_section)) {
+                yield laser_object;
+            }
+        }
+
+        const entries = range ? lasers.getRange(range[0], range[1], false) : lasers.entries();
+
+        for(const section of entries) {
+            for(const laser_object of handleSection(section)) {
+                yield laser_object;
             }
         }
     }
@@ -269,6 +318,74 @@ export class Chart implements kson.Kson {
             ...this.note.fx.map((notes) => notes.maxKey() ?? 0n),
             ...this.note.laser.map((notes) => notes.maxKey() ?? 0n),
         ) ?? 0n;
+    }
+    
+    getMeasureInfoByIdx(measure_idx: MeasureIdx): MeasureInfo {
+        // TODO: make it more efficient
+        const first_time_sig = this.beat.time_sig.nextHigherPair(void 0);
+        if(first_time_sig == null) throw new Error(`Invalid internal state (this.beat.time_sig is empty)`);
+        
+        const curr_measure_info: MeasureInfo = {
+            idx: 0n, pulse: 0n,
+            time_sig: first_time_sig[1][0],
+            length: (PULSES_PER_WHOLE * BigInt(first_time_sig[1][0][0])) / BigInt(first_time_sig[1][0][1]),
+            beat_length: PULSES_PER_WHOLE / BigInt(first_time_sig[1][0][1]),
+        };
+
+        for(const [next_measure_idx, next_time_sig] of this.beat.time_sig) {
+            if(next_measure_idx <= 0n) continue;
+
+            if(measure_idx < next_measure_idx) {
+                break;
+            }
+
+            curr_measure_info.time_sig = next_time_sig;
+            curr_measure_info.pulse += (next_measure_idx - curr_measure_info.idx) * curr_measure_info.length;
+            curr_measure_info.beat_length = PULSES_PER_WHOLE / BigInt(next_time_sig[1]);
+            curr_measure_info.length = curr_measure_info.beat_length * BigInt(next_time_sig[0]);
+            curr_measure_info.idx = next_measure_idx;
+        }
+
+        curr_measure_info.pulse += (measure_idx - curr_measure_info.idx) * curr_measure_info.length;
+        curr_measure_info.idx = measure_idx;
+
+        return curr_measure_info;
+    }
+
+    getMeasureInfoByPulse(pulse: Pulse): MeasureInfo {
+        // TODO: make it more efficient
+        const first_time_sig = this.beat.time_sig.nextHigherPair(void 0);
+        if(first_time_sig == null) throw new Error(`Invalid internal state (this.beat.time_sig is empty)`);
+        
+        const curr_measure_info: MeasureInfo = {
+            idx: 0n, pulse: 0n,
+            time_sig: first_time_sig[1][0],
+            length: (PULSES_PER_WHOLE * BigInt(first_time_sig[1][0][0])) / BigInt(first_time_sig[1][0][1]),
+            beat_length: PULSES_PER_WHOLE / BigInt(first_time_sig[1][0][1]),
+        };
+
+        for(const [next_measure_idx, next_time_sig] of this.beat.time_sig) {
+            if(next_measure_idx <= 0n) continue;
+
+            const guessed_measure_idx = curr_measure_info.idx + (pulse - curr_measure_info.pulse) / curr_measure_info.length;
+            if(guessed_measure_idx < next_measure_idx) {
+                curr_measure_info.pulse += (guessed_measure_idx - curr_measure_info.idx) * curr_measure_info.length;
+                curr_measure_info.idx = guessed_measure_idx;
+                return curr_measure_info;
+            }
+
+            curr_measure_info.time_sig = next_time_sig;
+            curr_measure_info.pulse += (next_measure_idx - curr_measure_info.idx) * curr_measure_info.length;
+            curr_measure_info.beat_length = PULSES_PER_WHOLE / BigInt(next_time_sig[1]);
+            curr_measure_info.length = curr_measure_info.beat_length * BigInt(next_time_sig[0]);
+            curr_measure_info.idx = next_measure_idx;
+        }
+
+        const measure_idx = curr_measure_info.idx + (pulse - curr_measure_info.pulse) / curr_measure_info.length;
+        curr_measure_info.pulse = (measure_idx - curr_measure_info.idx) * curr_measure_info.length;
+        curr_measure_info.idx = measure_idx;
+
+        return curr_measure_info;
     }
 
     /** Get total duration and a map containing durations for each BPM. */
