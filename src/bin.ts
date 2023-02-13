@@ -1,3 +1,5 @@
+// Simple binary for testing; use `kshoot-tools` for more diverse tasks
+
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as kshoot from "./index.js";

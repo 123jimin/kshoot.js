@@ -13,7 +13,7 @@
             "type": "node"
         },
         {
-            "name": "kshoot",
+            "name": "Run Binary",
             "program": "dist/bin",
             "args": ["test/chart/community/hexagon-1.ksh"],
             "stopOnEntry": false,
