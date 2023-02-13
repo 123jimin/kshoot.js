@@ -104,7 +104,7 @@ I want `kshoot` to have as little dependencies as possible. Some zero-dependency
 
 ```text
 $ npm ls --prod --all
-kshoot@0.0.2
+kshoot@0.0.4
 ├── sorted-btree@1.8.1
 └── zod@3.20.6
 ```

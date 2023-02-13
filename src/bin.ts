@@ -1,20 +1,13 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {ArgumentParser} from 'argparse';
-
 import * as kshoot from "./index.js";
 
-const parser = new ArgumentParser({
-    prog: "kshoot",
-    description: "KSH/KSON chart utility",
-});
-parser.add_argument("filename", {help: "file name for the chart"});
-
-const args = parser.parse_args();
+const chart_filename = process.argv.at(-1);
+if(!chart_filename) process.exit(1);
 
 let chart_buffer: Buffer;
 try {
-    const chart_path = path.isAbsolute(args.filename) ? args.filename : path.join(process.cwd(), args.filename);
+    const chart_path = path.isAbsolute(chart_filename) ? chart_filename : path.join(process.cwd(), chart_filename);
     chart_buffer = await fs.readFile(chart_path);
 } catch(e: unknown) {
     console.error(`${e}`);
@@ -73,7 +66,7 @@ class App {
     }
 }
 
-const app: App = new App(args.filename, chart);
+const app: App = new App(chart_filename, chart);
 
 app.printSummary();
 app.printAnalysis();
