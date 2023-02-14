@@ -26,7 +26,6 @@ type ChartBeatInfo = z.output<typeof kson.schema.BeatInfo>;
 type ChartGaugeInfo = z.output<typeof kson.schema.GaugeInfo>;
 type ChartNoteInfo = z.output<typeof kson.schema.NoteInfo>;
 type ChartLaserSection = z.output<typeof kson.schema.LaserSection>;
-type ChartLaserSectionPoints = ChartLaserSection[1];
 type ChartAudioInfo = z.output<typeof kson.schema.AudioInfo>;
 type ChartEditorInfo = z.output<typeof kson.schema.EditorInfo>;
 type ChartCompatInfo = z.output<typeof kson.schema.CompatInfo>;
@@ -180,8 +179,8 @@ export class Chart implements kson.Kson {
                 yield [prev_note[0], ...prev_note[1]];
             }
 
-            for(const [pulse, note] of notes.getRange(range[0], range[1], false)) {
-                yield [pulse, ...note];
+            for(const value of notes.iterateRange(range[0], range[1])) {
+                yield value;
             }
         });
 
@@ -204,7 +203,7 @@ export class Chart implements kson.Kson {
         }
 
         const lasers = this.note.laser[lane_or_range];
-        const handleSection = function*([pulse, [section_points, width]]: [Pulse, [ChartLaserSectionPoints, number]]): Generator<[Pulse, LaserObject]> {
+        const handleSection = function*([pulse, section_points, width]: ChartLaserSection): Generator<[Pulse, LaserObject]> {
             // TODO: handle the case where the laser section overlaps with the beginning of the range
 
             const section_it = section_points[Symbol.iterator]();
@@ -235,13 +234,15 @@ export class Chart implements kson.Kson {
         if(range) {
             // Check if there's a laser note including the begin of the range
             const first_section = lasers.nextLowerPair(range[0]);
-            if(first_section) for(const laser_object of handleSection(first_section)) {
-                yield laser_object;
+            if(first_section) {
+                const [pulse, value] = first_section;
+                for(const laser_object of handleSection([pulse, ...value])) {
+                    yield laser_object;
+                }
             }
         }
 
-        const entries = range ? lasers.getRange(range[0], range[1], false) : lasers.entries();
-
+        const entries = range ? lasers.iterateRange(range[0], range[1]) : lasers[Symbol.iterator]();
         for(const section of entries) {
             for(const laser_object of handleSection(section)) {
                 yield laser_object;
