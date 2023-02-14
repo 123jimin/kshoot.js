@@ -54,8 +54,13 @@ class App {
         console.log(`- jacks: ${stat.jacks}`);
         console.log(`- sofulan: ${stat.bpm_change_intensity.toFixed(1)} (${stat.bpm_changes} BPM changes)`);
 
-        console.log("chips\tholds\thold_chains\tmax_density" + "\tmoving_lasers\tmoving_laser_chains\tslams\tone_hand_notes\tone_hand_note_chains\twrong_side_notes\twrong_side_note_chains" + "\tbc_jacks\tadlr_jacks\tbpm_change_intensity");
+        console.log(
+            "seconds"
+            + "\tchips\tholds\thold_chains\tmax_density"
+            + "\tmoving_lasers\tmoving_laser_chains\tslams\tone_hand_notes\tone_hand_note_chains\twrong_side_notes\twrong_side_note_chains"
+            + "\tbc_jacks\tadlr_jacks\tbpm_change_intensity");
         const features = [
+            ((this.chart.getTimeByPulse(this.chart.getLastNotePulse()) - this.chart.getTimeByPulse(this.chart.getFirstNotePulse()))/1000).toFixed(3),
             stat.chips, stat.holds, stat.hold_chains, stat.max_density,
             stat.moving_lasers, stat.moving_laser_chains, stat.slams, stat.one_hand_notes, 0, stat.wrong_side_notes, 0,
             [1, 2].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y), [0, 3, 4, 5].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y), stat.bpm_change_intensity.toFixed(1),

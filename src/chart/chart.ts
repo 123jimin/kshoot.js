@@ -305,6 +305,7 @@ export class Chart implements kson.Kson {
 
     /* Utility functions */
 
+    /** Returns the pulse for the first occurence of any note/laser. */
     getFirstNotePulse(): kson.Pulse {
         return min(
             ...this.note.bt.map((notes) => notes.minKey() ?? 0n),
@@ -313,11 +314,26 @@ export class Chart implements kson.Kson {
         ) ?? 0n;
     }
 
+    /** Returns the pulse for the end of the last occurence of any note/laser. */
     getLastNotePulse(): kson.Pulse {
+        const getLastButtonPulse = (notes: SortedList<kson.ButtonNote>): kson.Pulse => {
+            const last_elem = notes.nextLowerPair(void 0);
+            if(last_elem == null) return 0n;
+
+            return last_elem[0] + last_elem[1][0];
+        };
+
+        const getLastLaserPulse = (notes: SortedList<ChartLaserSection>): kson.Pulse => {
+            const last_section = notes.nextLowerPair(void 0);
+            if(last_section == null) return 0n;
+
+            return last_section[0] + (last_section[1][0].maxKey() ?? 0n);
+        };
+
         return max(
-            ...this.note.bt.map((notes) => notes.maxKey() ?? 0n),
-            ...this.note.fx.map((notes) => notes.maxKey() ?? 0n),
-            ...this.note.laser.map((notes) => notes.maxKey() ?? 0n),
+            ...this.note.bt.map(getLastButtonPulse),
+            ...this.note.fx.map(getLastButtonPulse),
+            ...this.note.laser.map(getLastLaserPulse),
         ) ?? 0n;
     }
 

@@ -54,6 +54,8 @@ interface BeatStat {
     bpm_change_intensity: number;
 }
 
+// TODO: REWRITE EVERYTHING MORE CLEANLY (ex: make a generator that splits begin and end of a hold note)
+
 export interface Stat extends NoteOnlyStat, LaserOnlyStat, OneHandStat, BeatStat {}
 
 export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
