@@ -347,7 +347,7 @@ export class Chart implements kson.Kson {
         }
 
         ticks += getPartChains([lowest_pulse, range[1]], tick_rate);
-        
+
         return ticks;
     }
     
@@ -417,6 +417,24 @@ export class Chart implements kson.Kson {
         curr_measure_info.idx = measure_idx;
 
         return curr_measure_info;
+    }
+
+    getTimeByPulse(pulse: Pulse): number {
+        let prev_pulse = 0n;
+        let prev_time = 0;
+        let prev_time_divider = 120 * Number(PULSES_PER_WHOLE);
+
+        for(const [next_pulse, bpm] of this.beat.bpm) {
+            if(pulse <= next_pulse) {
+                break;
+            }
+
+            prev_time += Number(240_000n*(next_pulse-prev_pulse)) / prev_time_divider;
+            prev_pulse = next_pulse;
+            prev_time_divider = bpm * Number(PULSES_PER_WHOLE);
+        }
+        
+        return prev_time + Number(240_000n*(pulse-prev_pulse)) / prev_time_divider;
     }
 
     /** Get total duration and a map containing durations for each BPM. */

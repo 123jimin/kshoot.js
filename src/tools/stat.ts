@@ -7,7 +7,7 @@ import type {
 // 130BPM 16ths
 const MAX_JACK_INTERVAL = 15_000 / 130;
 
-const DENSITY_WINDOW = 4n * PULSES_PER_WHOLE;
+const DENSITY_WINDOW = 4000;
 
 interface NoteCountStat {
     /** \# of short notes */
@@ -72,10 +72,10 @@ export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
     const front_note_time = [0, 0, 0, 0, 0, 0];
     const front_note_jack_count = [0, 0, 0, 0, 0, 0];
 
-    const back_button_note_it = chart.buttonNotes();
-    let back_button_notes: [Pulse, ButtonObject[]] = back_button_note_it.next().value;
+    const back_button_note_it = chart.withTimingInfo(chart.buttonNotes());
+    let back_button_notes: [Readonly<TimingInfo>, ButtonObject[]] = back_button_note_it.next().value;
 
-    const back_note_ends: [Pulse, Pulse, Pulse, Pulse, Pulse, Pulse] = [-1n, -1n, -1n, -1n, -1n, -1n];
+    const back_note_ends: [number, number, number, number, number, number] = [0, 0, 0, 0, 0, 0];
 
     // Notes between [back_button_note, front_button_note], inclusive
     let curr_notes_inbetween = 0;
@@ -126,19 +126,19 @@ export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
 
         // Discard old long notes
         for(let i=0; i<6; ++i) {
-            if(back_note_ends[i] < 0n) continue;
+            if(back_note_ends[i] <= 0) continue;
 
-            if(back_note_ends[i] + DENSITY_WINDOW <= timing_info.pulse) {
-                back_note_ends[i] = -1n;
+            if(back_note_ends[i] + DENSITY_WINDOW <= timing_info.time) {
+                back_note_ends[i] = 0;
                 --curr_notes_inbetween;
             }
         }
 
-        while(back_button_notes[0] + DENSITY_WINDOW < timing_info.pulse) {
+        while(back_button_notes[0].time + DENSITY_WINDOW < timing_info.time) {
             for(const button of back_button_notes[1]) {
                 // Find long notes which must not be discarded (yet).
                 if(button.length > 0) {
-                    const note_end = back_button_notes[0] + button.length;
+                    const note_end = chart.getTimeByPulse(back_button_notes[0].pulse + button.length);
                     // Note that > should be used instead of >=; long notes with coinciding with the beginning of a range will not be counted.
                     if(note_end + DENSITY_WINDOW > timing_info.pulse) {
                         back_note_ends[button.lane] = note_end;
@@ -153,7 +153,7 @@ export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
 
         if(curr_notes_inbetween > stat.max_density) {
             stat.max_density = curr_notes_inbetween;
-            stat.max_density_range = [back_button_notes[0], timing_info.pulse];
+            stat.max_density_range = [back_button_notes[0].pulse, timing_info.pulse];
         }
 
         front_button_notes = front_button_note_it.next().value;
