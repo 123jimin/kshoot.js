@@ -7,6 +7,7 @@ import type {First, Rest, AsTuple} from "./util.js";
 
 export interface ISortedList<V extends AsTuple<V>> extends Exclude<ISortedMap<First<V>, Rest<V>>, typeof Symbol.iterator>, Iterable<AsTuple<V>> {
     put(elem: AsTuple<V>): unknown;
+    iterateRange(begin: First<V>, end: First<V>): Generator<AsTuple<V>>;
     [Symbol.iterator](): Generator<AsTuple<V>>;
 }
 
@@ -21,6 +22,12 @@ export class SortedList<V extends AsTuple<V>> extends BTree<First<V>, Rest<V>> i
     }
     put([key, ...value]: AsTuple<V>) {
         return this.set(key, value);
+    }
+    *iterateRange(begin: First<V>, end: First<V>): Generator<AsTuple<V>> {
+        // TODO: implement proper iterator
+        for(const [key, value] of this.getRange(begin, end)) {
+            yield [key, ...value];
+        }
     }
     *[Symbol.iterator](): Generator<AsTuple<V>> {
         for(const [key, value] of this.entries()) {

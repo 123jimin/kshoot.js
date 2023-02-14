@@ -251,14 +251,20 @@ export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
 
 export function getBeatStat(chart: Chart): BeatStat {
     const stat: BeatStat = {
-        bpm_changes: chart.beat.bpm.length,
+        bpm_changes: 0,
         bpm_change_intensity: 0,
     };
 
+    const prev_bpm_pair = chart.beat.bpm.nextLowerPair(chart.getFirstNotePulse());
     let prev_bpm = 0;
-    for(const [pulse, bpm] of chart.beat.bpm) {
-        if(pulse > 0n) {
+    if(prev_bpm_pair) {
+        prev_bpm = prev_bpm_pair[1][0];
+    }
+    
+    for(const [pulse, bpm] of chart.beat.bpm.iterateRange(chart.getFirstNotePulse(), chart.getLastNotePulse() + 1n)) {
+        if(pulse > 0 && prev_bpm > 0) {
             stat.bpm_change_intensity += Math.abs(bpm - prev_bpm);
+            ++stat.bpm_changes;
         }
 
         prev_bpm = bpm;
