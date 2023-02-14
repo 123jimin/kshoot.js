@@ -73,12 +73,10 @@ export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
             ++curr_notes_inbetween;
 
             if(front_note_jack_count[button.lane] === 0) {
-                front_note_time[button.lane] = timing_info.time;
                 front_note_jack_count[button.lane] = 1;
             } else if(front_note_time[button.lane] + MAX_JACK_INTERVAL <= timing_info.time) {
-                front_note_jack_count[button.lane] = 0;
+                front_note_jack_count[button.lane] = 1;
             } else {
-                front_note_time[button.lane] = timing_info.time;
                 const jack_count = ++front_note_jack_count[button.lane];
                 if(jack_count === 3) {
                     stat.jacks += 3;
@@ -88,13 +86,14 @@ export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
                     ++stat.by_lane[button.lane].jacks;
                 }
             }
+            
+            front_note_time[button.lane] = timing_info.time;
 
             ++stat.notes;
             ++stat.by_lane[button.lane].notes;
             if(button.length > 0n) {
                 ++stat.holds;
                 ++stat.by_lane[button.lane].holds;
-                front_note_jack_count[button.lane] = 0; // TODO: do not clear jack count for long notes
             } else {
                 ++stat.chips;
                 ++stat.by_lane[button.lane].chips;

@@ -128,9 +128,9 @@ export class Chart implements kson.Kson {
         let time_divider = curr_bpm[1] * Number(PULSES_PER_WHOLE);
 
         for(const [pulse, data] of it) {
-            if(next_bpm && pulse <= next_bpm[0]) {
+            while(next_bpm && next_bpm[0] <= pulse) {
                 base_time += Number(240_000n*(pulse-base_pulse))/time_divider;
-                base_pulse = pulse;
+                base_pulse = next_bpm[0];
                 time_divider = next_bpm[1] * Number(PULSES_PER_WHOLE);
 
                 curr_bpm = next_bpm;
@@ -138,7 +138,7 @@ export class Chart implements kson.Kson {
             }
 
             let measure_idx = measure_info.idx + (pulse - measure_info.pulse) / measure_info.length;
-            if(next_time_sig && measure_idx <= next_time_sig[0]) {
+            while(next_time_sig && next_time_sig[0] <= measure_idx) {
                 measure_info.pulse = measure_info.pulse + (next_time_sig[0] - measure_info.idx) * measure_info.length;
                 measure_info.idx = next_time_sig[0];
                 measure_info.time_sig = next_time_sig[1];

@@ -50,7 +50,7 @@ class App {
         console.log(`- lasers: ${stat.moving_lasers + stat.slams} (${stat.moving_lasers} moving lasers + ${stat.slams} slams)`);
         console.log(`- one hand: ${stat.one_hand_notes}`);
         console.log(`- hand trip: ${stat.wrong_side_notes}`);
-        console.log(`- jacks: ${stat.jacks} (BC: ${[1, 2].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)}, ADLR: ${[0, 3, 4,].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)})`);
+        console.log(`- jacks: ${stat.jacks} (BC: ${[1, 2].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)}, ADLR: ${[0, 3, 4, 5].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)})`);
         console.log(`- sofulan: ${stat.bpm_change_intensity.toFixed(1)} (${stat.bpm_changes} BPM changes)`);
     }
 
