@@ -148,19 +148,26 @@ class Converter {
                     const kind = i<4 ? (measure_line.bt ? measure_line.bt[i] : ksh.NoteKind.Empty) : (measure_line.fx ? measure_line.fx[i-4] : ksh.NoteKind.Empty);
                     const last_note = last_notes[i];
                     if(kind === ksh.NoteKind.Long && last_note && last_note[0] + last_note[1] >= pulse) {
-                        last_note[1] = pulse + pulses_per_line; 
+                        last_note[1] = pulse + pulses_per_line - last_note[0];
                         continue loop_note;
                     }
-
-                    if(kind === ksh.NoteKind.Empty) {
+                    
+                    if(last_note != null) {
+                        this.chart.addButtonNote(i, last_note);
                         last_notes[i] = null;
-                        continue loop_note;
                     }
 
-                    const next_note: [kson.Pulse, kson.Pulse] = [pulse, kind === ksh.NoteKind.Long ? pulses_per_line : 0n];
-
-                    this.chart.addButtonNote(i, next_note);
-                    last_notes[i] = next_note;
+                    switch(kind) {
+                        case ksh.NoteKind.Empty:
+                            // Nothing
+                            break;
+                        case ksh.NoteKind.Short:
+                            this.chart.addButtonNote(i, [pulse, 0n]);
+                            break;
+                        case ksh.NoteKind.Long:
+                            last_notes[i] = [pulse, pulses_per_line];
+                            break;
+                    }
                 }
 
                 loop_laser: for(let i=0; i<2; ++i) {
@@ -201,6 +208,13 @@ class Converter {
             }
 
             ++measure_idx;
+        }
+
+        for(let i=0; i<6; ++i) {
+            const last_note = last_notes[i];
+            if(last_note != null) {
+                this.chart.addButtonNote(i, last_note);
+            }
         }
     }
 

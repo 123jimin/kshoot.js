@@ -10,10 +10,21 @@ const MAX_JACK_INTERVAL = 15_000 / 130;
 const DENSITY_WINDOW = 4n * PULSES_PER_WHOLE;
 
 interface NoteCountStat {
-    chips: number; holds: number; notes: number; jacks: number;
+    /** \# of short notes */
+    chips: number;
+    /** \# of long notes */
+    holds: number;
+    /** \# of chains for long notes */
+    hold_chains: number;
+    /** `chips` + `holds` */
+    notes: number;
+    /** `chips` + `hold_chains` */
+    note_chains: number;
+
+    jacks: number;
 }
 
-function createNoteCountStat(): NoteCountStat { return {notes: 0, chips: 0, holds: 0, jacks: 0}; }
+function createNoteCountStat(): NoteCountStat { return {chips: 0, holds: 0, hold_chains: 0, notes: 0, note_chains: 0, jacks: 0}; }
 
 interface NoteOnlyStat extends NoteCountStat {
     by_lane: [NoteCountStat, NoteCountStat, NoteCountStat, NoteCountStat, NoteCountStat, NoteCountStat];
@@ -25,6 +36,8 @@ interface NoteOnlyStat extends NoteCountStat {
 interface LaserOnlyStat {
     /** moving lasers, excluding slams */
     moving_lasers: number;
+    /** chains of moving lasers, excluding slams */
+    moving_laser_chains: number;
     /** slams */
     slams: number;
 }
@@ -44,7 +57,6 @@ interface BeatStat {
 export interface Stat extends NoteOnlyStat, LaserOnlyStat, OneHandStat, BeatStat {}
 
 export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
-
     const stat: NoteOnlyStat = {
         ...createNoteCountStat(),
         by_lane: [createNoteCountStat(), createNoteCountStat(), createNoteCountStat(), createNoteCountStat(), createNoteCountStat(), createNoteCountStat()],
@@ -86,17 +98,29 @@ export function getNoteOnlyStat(chart: Chart): NoteOnlyStat {
                     ++stat.by_lane[button.lane].jacks;
                 }
             }
-            
+
             front_note_time[button.lane] = timing_info.time;
 
             ++stat.notes;
             ++stat.by_lane[button.lane].notes;
+
             if(button.length > 0n) {
                 ++stat.holds;
                 ++stat.by_lane[button.lane].holds;
+
+                const chains = chart.getChains([timing_info.pulse, timing_info.pulse + button.length]);
+
+                stat.hold_chains += chains;
+                stat.note_chains += chains;
+                
+                stat.by_lane[button.lane].hold_chains += chains;
+                stat.by_lane[button.lane].note_chains += chains;
             } else {
                 ++stat.chips;
+                ++stat.note_chains;
+
                 ++stat.by_lane[button.lane].chips;
+                ++stat.by_lane[button.lane].note_chains;
             }
         }
 
@@ -155,7 +179,8 @@ enum OneHandState {
 
 export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
     const stat: LaserOnlyStat & OneHandStat = {
-        moving_lasers: 0, slams: 0, one_hand_notes: 0, wrong_side_notes: 0,
+        moving_lasers: 0, moving_laser_chains: 0, slams: 0,
+        one_hand_notes: 0, wrong_side_notes: 0,
     };
     
     const laser_note_it = chart.laserNotes();
@@ -232,6 +257,8 @@ export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
             if(is_slam) ++stat.slams;
             
             if(laser_note.v[1] !== laser_note.ve && laser_note.length > 0n) {
+                stat.moving_laser_chains += chart.getChains([laser_notes[0], laser_notes[0] + laser_note.length]);
+
                 let prev_dir: -1|0|1 = 0;
 
                 if(!is_slam) {

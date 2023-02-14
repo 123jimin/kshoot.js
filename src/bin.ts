@@ -44,14 +44,24 @@ class App {
     printStat(): void {
         const stat: kshoot.tools.stat.Stat = kshoot.tools.stat.getStat(chart);
 
+
         console.log('Chart stats:');
-        console.log(`- notes: ${stat.notes} (${stat.chips} chips + ${stat.holds} holds)`);
+        console.log(`- notes: ${stat.notes} (${stat.note_chains})`);
         console.log(`- max density: ${stat.max_density}`);
-        console.log(`- lasers: ${stat.moving_lasers + stat.slams} (${stat.moving_lasers} moving lasers + ${stat.slams} slams)`);
+        console.log(`- lasers: ${stat.moving_lasers + stat.slams}`);
         console.log(`- one hand: ${stat.one_hand_notes}`);
         console.log(`- hand trip: ${stat.wrong_side_notes}`);
-        console.log(`- jacks: ${stat.jacks} (BC: ${[1, 2].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)}, ADLR: ${[0, 3, 4, 5].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)})`);
+        console.log(`- jacks: ${stat.jacks}`);
         console.log(`- sofulan: ${stat.bpm_change_intensity.toFixed(1)} (${stat.bpm_changes} BPM changes)`);
+
+        console.log("chips holds hold_chains max_density" + " moving_lasers moving_laser_chains slams one_hand_notes one_hand_note_chains wrong_side_notes wrong_side_note_chains" + " bc_jacks adlr_jacks bpm_change_intensity");
+        const features = [
+            stat.chips, stat.holds, stat.hold_chains, stat.max_density,
+            stat.moving_lasers, stat.moving_laser_chains, stat.slams, stat.one_hand_notes, 0, stat.wrong_side_notes, 0,
+            [1, 2].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y), [0, 3, 4, 5].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y), stat.bpm_change_intensity.toFixed(1),
+        ];
+        
+        console.log(`${features.join(' ')}`);
     }
 
     printAnalysis(): void {
@@ -62,5 +72,6 @@ class App {
 const app: App = new App(chart_filename, chart);
 
 app.printSummary();
+console.log();
 app.printAnalysis();
 

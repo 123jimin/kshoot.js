@@ -320,6 +320,36 @@ export class Chart implements kson.Kson {
             ...this.note.laser.map((notes) => notes.maxKey() ?? 0n),
         ) ?? 0n;
     }
+
+    getChains(range: PulseRange): number {
+        const begin_pulse = this.beat.bpm.nextLowerKey(range[0] + 1n) ?? 0n;
+
+        const getPartChains = (range: PulseRange, tick_rate: bigint): number => {
+            if(range[0] >= range[1]) return 0;
+
+            const begin_ind = (range[0] + (tick_rate-1n)) / tick_rate;
+            const end_ind = range[1] / tick_rate;
+
+            return Number(end_ind - begin_ind);
+        }
+
+        let tick_rate = PULSES_PER_WHOLE / 16n;
+        let lowest_pulse = range[0];
+        let ticks = 0;
+
+        for(const [pulse, bpm] of this.beat.bpm.iterateRange(begin_pulse, range[1])) {
+            tick_rate = PULSES_PER_WHOLE / (bpm >= 255 ? 8n : 16n);
+
+            if(lowest_pulse < pulse) {
+                ticks += getPartChains([lowest_pulse, pulse], tick_rate);
+                lowest_pulse = pulse;
+            }
+        }
+
+        ticks += getPartChains([lowest_pulse, range[1]], tick_rate);
+        
+        return ticks;
+    }
     
     getMeasureInfoByIdx(measure_idx: MeasureIdx): MeasureInfo {
         // TODO: make it more efficient
