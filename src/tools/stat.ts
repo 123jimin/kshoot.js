@@ -178,8 +178,12 @@ export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
 
     while(laser_notes) {
         for(const laser_note of laser_notes[1]) {
+            const is_slam = laser_note.v[0] !== laser_note.v[1];
+
             // Insignificant laser
-            if(laser_note.v[0] === laser_note.v[1] && laser_note.v[1] === laser_note.ve) continue;
+            if(!is_slam && laser_note.v[1] === laser_note.ve) continue;
+
+            const eff_laser_len = laser_note.v[1] === laser_note.ve ? 0n : laser_note.length;
 
             // Check previously held notes
             for(let i=0; i<6; ++i) {
@@ -206,7 +210,7 @@ export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
             }
 
             // Calculate one-hand stats; note that the end condition <= is needed to check notes at the end of the laser
-            while(button_notes && (button_notes[0] <= laser_notes[0] + laser_note.length)) {
+            while(button_notes && (button_notes[0] <= laser_notes[0] + eff_laser_len)) {
                 for(const button_note of button_notes[1]) {
                     note_ends[button_note.lane] = button_notes[0] + button_note.length;
 
@@ -226,14 +230,17 @@ export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
                 button_notes = button_note_it.next().value;
             }
 
-            if(laser_note.v[0] !== laser_note.v[1]) ++stat.slams;
+            if(is_slam) ++stat.slams;
+            
             if(laser_note.v[1] !== laser_note.ve && laser_note.length > 0n) {
                 let prev_dir: -1|0|1 = 0;
 
-                const prev_laser_note = prev_laser_notes[laser_note.lane];
-                if(prev_laser_note && prev_laser_note[0] + prev_laser_note[1].length === laser_notes[0]) {
-                    if(prev_laser_note[1].v[1] < prev_laser_note[1].ve) prev_dir = 1; 
-                    else if(prev_laser_note[1].v[1] > prev_laser_note[1].ve) prev_dir = -1; 
+                if(!is_slam) {
+                    const prev_laser_note = prev_laser_notes[laser_note.lane];
+                    if(prev_laser_note && prev_laser_note[0] + prev_laser_note[1].length === laser_notes[0]) {
+                        if(prev_laser_note[1].v[1] < prev_laser_note[1].ve) prev_dir = 1; 
+                        else if(prev_laser_note[1].v[1] > prev_laser_note[1].ve) prev_dir = -1; 
+                    }
                 }
 
                 if(laser_note.v[1] < laser_note.ve && prev_dir !== 1 || laser_note.v[1] > laser_note.ve && prev_dir !== -1) {
