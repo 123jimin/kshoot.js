@@ -2,15 +2,15 @@
 
 ![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/123jimin/kshoot.js/build.yml?branch=main&style=flat-square)
 
-NOTE: this library is work in progress.
-
-This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania. This project supersedes [kson-js](https://github.com/123jimin/kson-js).
-
+This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania.
 This library is focused on having a simple, modular, and intuitive codebase with little dependency.
 
-Internally, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](https://github.com/qwertie/btree-typescript).
+**NOTE:** Check out [kshoot-tools](https://github.com/123jimin/kshoot-tools) if you are looking for *a program or a tool* to do something with chart files.
+This library can be used to create such tools, but is not a tool by itself.
 
 ## Progress
+
+This library is currently work-in-progress with only the basic features implemented.
 
 - KSH/KSON I/O
   - [x] Reading KSH
@@ -26,10 +26,6 @@ Internally, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](htt
 - Simple API
   - [x] Iterating each note in the chart
   - [x] Calculating median BPM
-- Auxillary features
-  - [ ] Radar
-  - [ ] Curved laser converter
-  - [ ] Linter
 
 ## Chart file specs
 
@@ -40,7 +36,7 @@ Internally, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](htt
 
 ### Basic data structure
 
-`Chart` implements `kson.Kson`, so be sure to read the KSON spec before using this library.
+`Chart` implements `kson.Kson`, so be sure to read the KSON spec before using this library. Also, `ByPulse<...>[]` and similar lists are managed by [sorted-btree](https://github.com/qwertie/btree-typescript).
 
 ```ts
 import {parse, Chart, kson} from 'kshoot.js';

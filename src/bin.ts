@@ -1,4 +1,5 @@
-// Simple binary for testing; use `kshoot-tools` for more diverse tasks
+// This is a simple app for testing features of this library.
+// Use `kshoot-tools` instead for more diverse tasks.
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -45,26 +46,15 @@ class App {
 
         console.log('Chart stats:');
         console.log(`- notes: ${stat.notes} (${stat.chips} chips + ${stat.holds} holds)`);
-        console.log(`- max. density: ${stat.max_density}`);
-        console.log(`- moving lasers: ${stat.moving_lasers}`);
-        console.log(`- slams: ${stat.slams}`);
-    }
-
-    printRadar(): void {
-        const radar: kshoot.tools.stat.Radar = kshoot.tools.stat.getRadar(chart);
-
-        console.log('Chart radar:');
-        console.log(`- notes: ${radar.notes}`);
-        console.log(`- peak: ${radar.peak}`);
-        console.log(`- tsumami: ${radar.tsumami}`);
-        console.log(`- tricky: ${radar.tricky}`);
-        console.log(`- hand trip: ${radar.hand_trip}`);
-        console.log(`- one hand: ${radar.one_hand}`);
+        console.log(`- max density: ${stat.max_density}`);
+        console.log(`- lasers: ${stat.moving_lasers + stat.slams} (${stat.moving_lasers} moving lasers + ${stat.slams} slams)`);
+        console.log(`- one hand: ${stat.one_hand_notes}`);
+        console.log(`- hand trip: ${stat.wrong_side_notes}`);
+        console.log(`- jacks: ${stat.jacks} (BC: ${[1, 2].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)}, ADLR: ${[0, 3, 4,].map((lane) => stat.by_lane[lane].jacks).reduce((x, y) => x+y)})`);
     }
 
     printAnalysis(): void {
         this.printStat();
-        this.printRadar();
     }
 }
 

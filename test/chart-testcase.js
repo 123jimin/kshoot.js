@@ -254,4 +254,20 @@ TEST("testcase/03-nov.ksh", function(ctx) {
             [5n*PULSES_PER_WHOLE+PULSES_PER_WHOLE/4n, {section_pulse: 5n*PULSES_PER_WHOLE, lane: 0, width: 1, length: 0n, v: [0, 1], ve: 1, curve: [0, 0]}],
         ]);
     });
+
+    it("should return correct laser objects", function() {
+        const {chart} = ctx;
+
+        assert.deepStrictEqual([...chart.laserNotes([
+            2n * PULSES_PER_WHOLE + 5n * (PULSES_PER_WHOLE/16n),
+            3n * PULSES_PER_WHOLE,
+        ])], [
+            [2n * PULSES_PER_WHOLE + 2n * (PULSES_PER_WHOLE/8n), [{lane: 0, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE, curve: [0, 0], v: [0, 0], ve: 0.5}]],
+            [2n * PULSES_PER_WHOLE + 3n * (PULSES_PER_WHOLE/8n), [{lane: 0, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE, curve: [0, 0], v: [0.5, 0.5], ve: 0}]],
+            [2n * PULSES_PER_WHOLE + 4n * (PULSES_PER_WHOLE/8n), [{lane: 1, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/2n, curve: [0, 0], v: [1, 1], ve: 0}]],
+            [2n * PULSES_PER_WHOLE + 5n * (PULSES_PER_WHOLE/8n), [{lane: 1, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/2n, curve: [0, 0], v: [0, 0], ve: 1}]],
+            [2n * PULSES_PER_WHOLE + 6n * (PULSES_PER_WHOLE/8n), [{lane: 1, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/2n, curve: [0, 0], v: [1, 1], ve: 0.5}]],
+            [2n * PULSES_PER_WHOLE + 7n * (PULSES_PER_WHOLE/8n), [{lane: 1, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/2n, curve: [0, 0], v: [0.5, 0.5], ve: 1}]],
+        ], "partial lasers");
+    })
 });
