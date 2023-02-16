@@ -258,6 +258,38 @@ export class Timing {
         return pair[1].time + Number(240_000n * (pulse - pair[0])) / (pair[1].bpm * Number(PULSES_PER_WHOLE));
     }
 
+    getChains(range: PulseRange, tick_rate?: Pulse): number {
+        if(range[0] >= range[1]) return 0;
+
+        if(tick_rate != null) {
+            const begin_ind = (range[0] + (tick_rate-1n)) / tick_rate;
+            const end_ind = range[1] / tick_rate;
+
+            return Number(end_ind - begin_ind);
+        }
+
+        const begin_pulse = this.bpm_by_pulse.nextLowerKey(range[0] + 1n) ?? 0n;
+
+        tick_rate = PULSES_PER_WHOLE / 16n;
+        let lowest_pulse = range[0];
+        let ticks = 0;
+
+        for(const [pulse, bpm_info] of this.bpm_by_pulse.entries(begin_pulse)) {
+            if(range[1] <= pulse) break;
+
+            tick_rate = PULSES_PER_WHOLE / (bpm_info.bpm >= 255 ? 8n : 16n);
+
+            if(lowest_pulse < pulse) {
+                ticks += this.getChains([lowest_pulse, pulse], tick_rate);
+                lowest_pulse = pulse;
+            }
+        }
+
+        ticks += this.getChains([lowest_pulse, range[1]], tick_rate);
+
+        return ticks;
+    }
+
     toString(): string {
         return `[Timing with ${this.bpm_by_pulse.size} bpm and ${this.time_sig_by_pulse.size} time_sig]`;
     }

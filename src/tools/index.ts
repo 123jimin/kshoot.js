@@ -1,2 +1,2 @@
 export * as linter from "./linter/index.js";
-export * as stat from "./stat.js";
+export * as stat from "./stat/index.js";

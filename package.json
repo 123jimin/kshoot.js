@@ -1,6 +1,6 @@
 {
   "name": "kshoot",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "JavaScript/TypeScript library for reading KSH and KSON charts for K-Shoot Mania",
   "files": ["/dist"],
   "main": "dist/index.js",

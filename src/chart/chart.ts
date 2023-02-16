@@ -10,8 +10,7 @@ import {default as readKSH} from "./read-ksh.js";
 
 export * from "./object.js";
 import type {
-    ButtonObject, LaserObject,
-    NoteObject, ChartObject
+    ButtonObject, LaserObject, LaserLane,
 } from "./object.js";
 
 export * from "./timing.js";
@@ -160,11 +159,11 @@ export class Chart implements kson.Kson {
     }
 
     /** Iterates through each laser segment, with lane (`0`: left, `1`: right) specified. */
-    laserNotes(lane: 0|1, range?: PulseRange): Generator<[Pulse, LaserObject]>;
+    laserNotes(lane: LaserLane, range?: PulseRange): Generator<[Pulse, LaserObject]>;
     /** Iterates through each laser segment. */
     laserNotes(range?: PulseRange): Generator<[Pulse, LaserObject[]]>;
 
-    *laserNotes(lane_or_range?: 0|1|PulseRange, range?: PulseRange): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
+    *laserNotes(lane_or_range?: LaserLane|PulseRange, range?: PulseRange): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
         if(lane_or_range == null || Array.isArray(lane_or_range)) {
             for(const [pulse, lasers] of iterateAll<[Pulse, LaserObject]>(this.laserNotes(0, lane_or_range), this.laserNotes(1, lane_or_range))) {
                 yield [pulse, lasers.map((laser) => laser[1])];
@@ -313,35 +312,9 @@ export class Chart implements kson.Kson {
         return timing.getTimeByPulse(this.getLastNotePulse()) - timing.getTimeByPulse(this.getFirstNotePulse());
     }
 
-    /** Get chains for the given range */
+    /** Get chains for the given range. */
     getChains(range: PulseRange): number {
-        const begin_pulse = this.beat.bpm.nextLowerKey(range[0] + 1n) ?? 0n;
-
-        const getPartChains = (range: PulseRange, tick_rate: bigint): number => {
-            if(range[0] >= range[1]) return 0;
-
-            const begin_ind = (range[0] + (tick_rate-1n)) / tick_rate;
-            const end_ind = range[1] / tick_rate;
-
-            return Number(end_ind - begin_ind);
-        }
-
-        let tick_rate = PULSES_PER_WHOLE / 16n;
-        let lowest_pulse = range[0];
-        let ticks = 0;
-
-        for(const [pulse, bpm] of this.beat.bpm.iterateRange(begin_pulse, range[1])) {
-            tick_rate = PULSES_PER_WHOLE / (bpm >= 255 ? 8n : 16n);
-
-            if(lowest_pulse < pulse) {
-                ticks += getPartChains([lowest_pulse, pulse], tick_rate);
-                lowest_pulse = pulse;
-            }
-        }
-
-        ticks += getPartChains([lowest_pulse, range[1]], tick_rate);
-
-        return ticks;
+        return this.getTiming().getChains(range);
     }
     
     getMeasureInfoByIdx(measure_idx: MeasureIdx): MeasureInfo {

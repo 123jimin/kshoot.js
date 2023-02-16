@@ -5,6 +5,8 @@ export enum NoteLane {
     FX_L, FX_R,
 }
 
+export type LaserLane = 0|1;
+
 /** One button, either short (length === 0n) or long (length > 0n). */
 export interface ButtonObject {
     lane: NoteLane;
@@ -15,7 +17,7 @@ export interface ButtonObject {
 export interface LaserObject {
     /** Beginning of the entire section of laser containing this segment */
     section_pulse: kson.Pulse;
-    lane: 0|1; width: number;
+    lane: LaserLane; width: number;
     /** Length of this laser segment */
     length: kson.Pulse;
     /** Start position, with an optional slam (when `v[0] !== v[1]`) */
