@@ -1,7 +1,8 @@
 import {default as BTree_} from 'sorted-btree';
-const BTree = (BTree_ as unknown as {default: typeof BTree_}).default;
+export const BTree = (BTree_ as unknown as {default: typeof BTree_}).default;
 
 import type {ISortedMap} from 'sorted-btree';
+export type {ISortedMap} from 'sorted-btree';
 
 import type {First, Rest, AsTuple} from "./util.js";
 
@@ -23,9 +24,9 @@ export class SortedList<V extends AsTuple<V>> extends BTree<First<V>, Rest<V>> i
     put([key, ...value]: AsTuple<V>) {
         return this.set(key, value);
     }
-    *iterateRange(begin: First<V>, end: First<V>): Generator<AsTuple<V>> {
-        // TODO: implement proper iterator
-        for(const [key, value] of this.getRange(begin, end)) {
+    *iterateRange(begin: First<V>, end?: First<V>): Generator<AsTuple<V>> {
+        for(const [key, value] of this.entries(begin)) {
+            if(end != null && end <= key) break;
             yield [key, ...value];
         }
     }

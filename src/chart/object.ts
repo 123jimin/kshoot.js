@@ -1,29 +1,5 @@
 import * as kson from "../kson/index.js";
 
-export interface MeasureInfo {
-    /** `measure_idx` for this measure */
-    idx: kson.MeasureIdx;
-    /** Beginning of this measure */
-    pulse: kson.Pulse;
-    /** Time signature for this measure, in [numerator, denominator] */
-    time_sig: Readonly<kson.TimeSig>;
-    /** Length of this measure, in pulses */
-    length: kson.Pulse;
-    /** Beat length of this measure, in pulses */
-    beat_length: kson.Pulse;
-}
-
-/** Contains various timing informations for one point */
-export interface TimingInfo {
-    pulse: kson.Pulse;
-    /** Time from the beginning of the chart, in milliseconds. */
-    time: number;
-    /** BPM at this moment */
-    bpm: number;
-    /** Informations on the measure at this moment */
-    measure: MeasureInfo;
-}
-
 export enum NoteLane {
     BT_A, BT_B, BT_C, BT_D,
     FX_L, FX_R,

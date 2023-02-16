@@ -10,13 +10,17 @@ import {default as readKSH} from "./read-ksh.js";
 
 export * from "./object.js";
 import type {
-    MeasureInfo, TimingInfo,
     ButtonObject, LaserObject,
     NoteObject, ChartObject
 } from "./object.js";
 
+export * from "./timing.js";
+import {Timing} from "./timing.js";
+import type {
+    PulseRange, MeasureInfo, TimingInfo
+} from "./timing.js";
+
 export type Pulse = kson.Pulse;
-export type PulseRange = [begin: Pulse, end: Pulse];
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
 
 export type MeasureIdx = kson.MeasureIdx;
@@ -103,60 +107,26 @@ export class Chart implements kson.Kson {
         this.setKSON(null);
     }
 
+    /**
+     * Creates a {@link Timing} object, which can be used to query informations related to timing.
+     * @returns The timing object for this chart
+     */
+    getTiming(): Timing {
+        return new Timing(this.beat);
+    }
+
     /* Iterators */
 
-    /** Converts an iterator of `[Pulse, ...]` into `[TimingInfo, ...]`. */
+    /**
+     * Converts an iterator of `[Pulse, ...]` into `[TimingInfo, ...]`.
+     * Alias for `this.getTiming().withTimingInfo(it)`.
+     * 
+     * @param it An iterator for a pair of `Pulse` and any object
+     * @yields {[TimingInfo, T]} `it` but `Pulse` replaced with the timing info
+     */
     *withTimingInfo<T>(it: IterableIterator<[kson.Pulse, T]>): Generator<[Readonly<TimingInfo>, T]> {
-        const bpm_it = this.beat.bpm[Symbol.iterator]();
-        const time_sig_it = this.beat.time_sig[Symbol.iterator]();
-
-        let curr_bpm: kson.ByPulse<number> = bpm_it.next().value;
-        let next_bpm: kson.ByPulse<number>|undefined = bpm_it.next().value;
-
-        const init_time_sig: kson.ByMeasureIdx<kson.TimeSig> = time_sig_it.next().value;
-        let next_time_sig: kson.ByMeasureIdx<kson.TimeSig>|undefined = time_sig_it.next().value;
-
-        const measure_info: MeasureInfo = {
-            idx: 0n, pulse: 0n, time_sig: init_time_sig[1],
-            length: (PULSES_PER_WHOLE * BigInt(init_time_sig[1][0])) / BigInt(init_time_sig[1][1]),
-            beat_length: PULSES_PER_WHOLE / BigInt(init_time_sig[1][1]),
-        };
-
-        let base_pulse = 0n;
-        let base_time = 0;
-
-        let time_divider = curr_bpm[1] * Number(PULSES_PER_WHOLE);
-
-        for(const [pulse, data] of it) {
-            while(next_bpm && next_bpm[0] <= pulse) {
-                base_time += Number(240_000n*(pulse-base_pulse))/time_divider;
-                base_pulse = next_bpm[0];
-                time_divider = next_bpm[1] * Number(PULSES_PER_WHOLE);
-
-                curr_bpm = next_bpm;
-                next_bpm = bpm_it.next().value;
-            }
-
-            let measure_idx = measure_info.idx + (pulse - measure_info.pulse) / measure_info.length;
-            while(next_time_sig && next_time_sig[0] <= measure_idx) {
-                measure_info.pulse = measure_info.pulse + (next_time_sig[0] - measure_info.idx) * measure_info.length;
-                measure_info.idx = next_time_sig[0];
-                measure_info.time_sig = next_time_sig[1];
-                measure_info.beat_length = PULSES_PER_WHOLE / BigInt(next_time_sig[1][1]);
-                measure_info.length = measure_info.beat_length * BigInt(next_time_sig[1][0]);
-                measure_idx = next_time_sig[0] + (pulse - measure_info.pulse) / measure_info.length;
-                next_time_sig  = time_sig_it.next().value;
-            }
-
-            measure_info.pulse += (measure_idx - measure_info.idx) * measure_info.length;
-            measure_info.idx = measure_idx;
-
-            yield [{
-                pulse,
-                time: base_time + Number(240_000n*(pulse - base_pulse))/time_divider,
-                bpm: curr_bpm[1],
-                measure: measure_info,
-            }, data];
+        for(const x of this.getTiming().withTimingInfo(it)) {
+            yield x;
         }
     }
     
@@ -337,6 +307,13 @@ export class Chart implements kson.Kson {
         ) ?? 0n;
     }
 
+    /** Get the duration of this chart, in milliseconds. */
+    getDuration(): number {
+        const timing = this.getTiming();
+        return timing.getTimeByPulse(this.getLastNotePulse()) - timing.getTimeByPulse(this.getFirstNotePulse());
+    }
+
+    /** Get chains for the given range */
     getChains(range: PulseRange): number {
         const begin_pulse = this.beat.bpm.nextLowerKey(range[0] + 1n) ?? 0n;
 
@@ -368,89 +345,19 @@ export class Chart implements kson.Kson {
     }
     
     getMeasureInfoByIdx(measure_idx: MeasureIdx): MeasureInfo {
-        // TODO: make it more efficient
-        const first_time_sig = this.beat.time_sig.nextHigherPair(void 0);
-        if(first_time_sig == null) throw new Error(`Invalid internal state (this.beat.time_sig is empty)`);
-        
-        const curr_measure_info: MeasureInfo = {
-            idx: 0n, pulse: 0n,
-            time_sig: first_time_sig[1][0],
-            length: (PULSES_PER_WHOLE * BigInt(first_time_sig[1][0][0])) / BigInt(first_time_sig[1][0][1]),
-            beat_length: PULSES_PER_WHOLE / BigInt(first_time_sig[1][0][1]),
-        };
-
-        for(const [next_measure_idx, next_time_sig] of this.beat.time_sig) {
-            if(next_measure_idx <= 0n) continue;
-
-            if(measure_idx < next_measure_idx) {
-                break;
-            }
-
-            curr_measure_info.time_sig = next_time_sig;
-            curr_measure_info.pulse += (next_measure_idx - curr_measure_info.idx) * curr_measure_info.length;
-            curr_measure_info.beat_length = PULSES_PER_WHOLE / BigInt(next_time_sig[1]);
-            curr_measure_info.length = curr_measure_info.beat_length * BigInt(next_time_sig[0]);
-            curr_measure_info.idx = next_measure_idx;
-        }
-
-        curr_measure_info.pulse += (measure_idx - curr_measure_info.idx) * curr_measure_info.length;
-        curr_measure_info.idx = measure_idx;
-
-        return curr_measure_info;
+        return this.getTiming().getMeasureInfoByIdx(measure_idx);
     }
 
     getMeasureInfoByPulse(pulse: Pulse): MeasureInfo {
-        // TODO: make it more efficient
-        const first_time_sig = this.beat.time_sig.nextHigherPair(void 0);
-        if(first_time_sig == null) throw new Error(`Invalid internal state (this.beat.time_sig is empty)`);
-        
-        const curr_measure_info: MeasureInfo = {
-            idx: 0n, pulse: 0n,
-            time_sig: first_time_sig[1][0],
-            length: (PULSES_PER_WHOLE * BigInt(first_time_sig[1][0][0])) / BigInt(first_time_sig[1][0][1]),
-            beat_length: PULSES_PER_WHOLE / BigInt(first_time_sig[1][0][1]),
-        };
-
-        for(const [next_measure_idx, next_time_sig] of this.beat.time_sig) {
-            if(next_measure_idx <= 0n) continue;
-
-            const guessed_measure_idx = curr_measure_info.idx + (pulse - curr_measure_info.pulse) / curr_measure_info.length;
-            if(guessed_measure_idx < next_measure_idx) {
-                curr_measure_info.pulse += (guessed_measure_idx - curr_measure_info.idx) * curr_measure_info.length;
-                curr_measure_info.idx = guessed_measure_idx;
-                return curr_measure_info;
-            }
-
-            curr_measure_info.time_sig = next_time_sig;
-            curr_measure_info.pulse += (next_measure_idx - curr_measure_info.idx) * curr_measure_info.length;
-            curr_measure_info.beat_length = PULSES_PER_WHOLE / BigInt(next_time_sig[1]);
-            curr_measure_info.length = curr_measure_info.beat_length * BigInt(next_time_sig[0]);
-            curr_measure_info.idx = next_measure_idx;
-        }
-
-        const measure_idx = curr_measure_info.idx + (pulse - curr_measure_info.pulse) / curr_measure_info.length;
-        curr_measure_info.pulse = (measure_idx - curr_measure_info.idx) * curr_measure_info.length;
-        curr_measure_info.idx = measure_idx;
-
-        return curr_measure_info;
+        return this.getTiming().getMeasureInfoByPulse(pulse);
     }
 
+    /**
+     * Convert the given pulse to time (in milliseconds).
+     * Alias for `this.getTiming().getTimeByPulse(pulse)`.
+     */
     getTimeByPulse(pulse: Pulse): number {
-        let prev_pulse = 0n;
-        let prev_time = 0;
-        let prev_time_divider = 120 * Number(PULSES_PER_WHOLE);
-
-        for(const [next_pulse, bpm] of this.beat.bpm) {
-            if(pulse <= next_pulse) {
-                break;
-            }
-
-            prev_time += Number(240_000n*(next_pulse-prev_pulse)) / prev_time_divider;
-            prev_pulse = next_pulse;
-            prev_time_divider = bpm * Number(PULSES_PER_WHOLE);
-        }
-        
-        return prev_time + Number(240_000n*(pulse-prev_pulse)) / prev_time_divider;
+        return this.getTiming().getTimeByPulse(pulse);
     }
 
     /** Get total duration and a map containing durations for each BPM. */
