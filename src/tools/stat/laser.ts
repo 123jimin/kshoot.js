@@ -1,7 +1,8 @@
 import type {
-    Chart, Pulse, ButtonObject, LaserObject,
-    ButtonConduct, LaserConduct, LaserLane,
+    Chart, Timing, Pulse, ButtonConduct, LaserConduct, LaserLane
 } from "../../chart/index.js";
+
+import { LaserConductAction } from "../../chart/index.js";
 
 import { ButtonLane } from "../../chart/index.js";
 
@@ -17,12 +18,24 @@ const isOnSide = (button_lane: ButtonLane, laser_lane: LaserLane): boolean => {
 }
 
 export interface LaserOnlyStat {
-    /** moving lasers, excluding slams */
-    moving_lasers: number;
-    /** chains of moving lasers, excluding slams */
-    moving_laser_chains: number;
-    /** slams */
+    /** chains of slant lasers, excluding slams */
+    slant_laser_chains: number;
+    /** slams; (*, L|R, *) */
     slams: number;
+
+    /** slams without any neighboring lasers; (0, L|R, 0) */
+    solo_slams: number;
+    /** slams immediately followed by a slant laser in the other direction; (*, L ,R) or (*, R, L) */
+    slam_then_triangles: number;
+    /** slams preceded and followed by slant lasers in the other directio; (L, R, L) or (R, L, R) */
+    slam_jolts: number;
+
+    /** lasers excluding slams, grouped by moving one direction  */
+    one_way_moving_lasers: number;
+    /** similar to `one_way_moving_lasers`, but a slam would separate the group */
+    one_way_moving_uninterrupted_lasers: number;
+    /** # of knob touches excluding solo slams */
+    moving_lasers: number;
 }
 
 export interface OneHandStat {
@@ -36,107 +49,115 @@ export enum OneHandState {
     None, OneHand, HandTrip,
 }
 
-export function getLaserStat(chart: Chart): LaserOnlyStat & OneHandStat {
-    const stat: LaserOnlyStat & OneHandStat = {
-        moving_lasers: 0, moving_laser_chains: 0, slams: 0,
-        one_hand_notes: 0, wrong_side_notes: 0,
+export function getLaserOnlyStat(chart: Chart, timing: Timing): LaserOnlyStat {
+    const stat: LaserOnlyStat  = {
+        slant_laser_chains: 0, slams: 0,
+        solo_slams: 0, slam_then_triangles: 0, slam_jolts: 0,
+
+        one_way_moving_lasers: 0, one_way_moving_uninterrupted_lasers: 0, moving_lasers: 0,
     };
-    
-    const laser_note_it = chart.laserNotes();
-    let laser_notes: [Pulse, LaserObject[]]|undefined = laser_note_it.next().value;
-    if(laser_notes == null) {
-        return stat;
-    }
 
-    // Previous laser notes, for each lane
-    const prev_laser_notes: [[Pulse, LaserObject]|null, [Pulse, LaserObject]|null] = [null, null];
-    
-    const button_note_it = chart.buttonNotes();
-    let button_notes: [Pulse, ButtonObject[]]|undefined = button_note_it.next().value;
+    for(const [pulse, lasers] of chart.laserConducts()) {
+        for(const laser of lasers) {
+            if(laser.dir_slam) {
+                ++stat.slams;
 
-    // End time and one hand states for notes
-    const note_ends: [Pulse, Pulse, Pulse, Pulse, Pulse, Pulse] = [-1n, -1n, -1n, -1n, -1n, -1n];
-    const one_hand_states: [OneHandState, OneHandState, OneHandState, OneHandState, OneHandState, OneHandState]
-        = [OneHandState.None, OneHandState.None, OneHandState.None, OneHandState.None, OneHandState.None, OneHandState.None];
+                if('dir_after' in laser && laser.dir_after !== laser.dir_slam) {
+                    ++stat.slam_then_triangles;
 
-    while(laser_notes) {
-        for(const laser_note of laser_notes[1]) {
-            const is_slam = laser_note.v[0] !== laser_note.v[1];
-
-            // Insignificant laser
-            if(!is_slam && laser_note.v[1] === laser_note.ve) continue;
-
-            const eff_laser_len = laser_note.v[1] === laser_note.ve ? 0n : laser_note.length;
-
-            // Check previously held notes
-            for(let i=0; i<6; ++i) {
-                if(note_ends[i] < laser_notes[0]) continue;
-                if(one_hand_states[i] === OneHandState.HandTrip) continue;
-
-                // Actually at this stage, one_hand_states[i] === OneHandState.OneHand...
-
-                // One-hand note checking
-                if(isOnSide(i, laser_note.lane)) {
-                    if(one_hand_states[i] === OneHandState.None) {
-                        one_hand_states[i] = OneHandState.OneHand;
-                        ++stat.one_hand_notes;
+                    if('dir_before' in laser && laser.dir_before !== laser.dir_slam) {
+                        ++stat.slam_jolts;
                     }
-                } else {
-                    if(one_hand_states[i] === OneHandState.None) {
-                        ++stat.one_hand_notes;
-                        ++stat.wrong_side_notes;
-                    } else if(one_hand_states[i] === OneHandState.OneHand) {
-                        ++stat.wrong_side_notes;
-                    }
-                    one_hand_states[i] = OneHandState.HandTrip;
                 }
             }
-
-            // Calculate one-hand stats; note that the end condition <= is needed to check notes at the end of the laser
-            while(button_notes && (button_notes[0] <= laser_notes[0] + eff_laser_len)) {
-                for(const button_note of button_notes[1]) {
-                    note_ends[button_note.lane] = button_notes[0] + button_note.length;
-
-                    if(button_notes[0] + button_note.length < laser_notes[0]) {
-                        one_hand_states[button_note.lane] = OneHandState.None;
-                        continue;
-                    }
-
-                    const wrong_side = !isOnSide(button_note.lane, laser_note.lane);
-
-                    ++stat.one_hand_notes;
-                    if(wrong_side) ++stat.wrong_side_notes;
-
-                    one_hand_states[button_note.lane] = wrong_side ? OneHandState.HandTrip : OneHandState.OneHand;
-                }
-
-                button_notes = button_note_it.next().value;
+            if('length_after' in laser) {
+                stat.slant_laser_chains += timing.getChains([pulse, pulse + laser.length_after]);
             }
-
-            if(is_slam) ++stat.slams;
-            
-            if(laser_note.v[1] !== laser_note.ve && laser_note.length > 0n) {
-                stat.moving_laser_chains += chart.getChains([laser_notes[0], laser_notes[0] + laser_note.length]);
-
-                let prev_dir: -1|0|1 = 0;
-
-                if(!is_slam) {
-                    const prev_laser_note = prev_laser_notes[laser_note.lane];
-                    if(prev_laser_note && prev_laser_note[0] + prev_laser_note[1].length === laser_notes[0]) {
-                        if(prev_laser_note[1].v[1] < prev_laser_note[1].ve) prev_dir = 1; 
-                        else if(prev_laser_note[1].v[1] > prev_laser_note[1].ve) prev_dir = -1; 
-                    }
-                }
-
-                if(laser_note.v[1] < laser_note.ve && prev_dir !== 1 || laser_note.v[1] > laser_note.ve && prev_dir !== -1) {
+            switch(laser.action) {
+                case LaserConductAction.Slam:
+                    ++stat.solo_slams;
+                    break;
+                case LaserConductAction.Start:
+                    ++stat.one_way_moving_lasers;
+                    ++stat.one_way_moving_uninterrupted_lasers;
                     ++stat.moving_lasers;
-                }
+                    break;
+                case LaserConductAction.Continue:
+                    if(!(laser.dir_before === laser.dir_after && (laser.dir_slam == null || laser.dir_slam == laser.dir_before))) {
+                        ++stat.one_way_moving_lasers;
+                    }
+                    if(!(laser.dir_slam == null && laser.dir_before === laser.dir_after)) {
+                        ++stat.one_way_moving_uninterrupted_lasers;                        
+                    }
+                    break;
             }
-
-            prev_laser_notes[laser_note.lane] = [laser_notes[0], laser_note];
         }
-        laser_notes = laser_note_it.next().value;
     }
 
     return stat;
+}
+
+export function getOneHandStat(chart: Chart, timing: Timing): OneHandStat {
+    const stat: OneHandStat = {
+        one_hand_notes: 0,
+        wrong_side_notes: 0,
+    };
+
+    // TODO: implement it
+
+    const button_conduct_it = chart.buttonConducts();
+    let button_conduct: [Pulse, ButtonConduct[]]|undefined = button_conduct_it.next().value;
+
+    const laser_conduct_it = chart.laserConducts();
+    let laser_conduct: [Pulse, LaserConduct[]]|undefined = laser_conduct_it.next().value;
+
+    const progressButton = (): void => {
+        button_conduct = button_conduct_it.next().value;
+    };
+
+    const progressLaser = (): void => {
+        laser_conduct = laser_conduct_it.next().value;
+    };
+
+    while(button_conduct || laser_conduct) {
+        if(laser_conduct == null) {
+            while(button_conduct) {
+                progressButton();
+            }
+            break;
+        }
+
+        if(button_conduct == null) {
+            while(laser_conduct) {
+                progressLaser();
+            }
+            break;
+        }
+
+        if(button_conduct[0] < laser_conduct[0]) {
+            while(button_conduct && button_conduct[0] < laser_conduct[0]) {
+                progressButton();
+            }
+            continue;
+        }
+
+        if(laser_conduct[0] < button_conduct[0]) {
+            while(laser_conduct && laser_conduct[0] < button_conduct[0]) {
+                progressLaser();
+            }
+            continue;
+        }
+        
+        button_conduct = button_conduct_it.next().value;
+        laser_conduct = laser_conduct_it.next().value;
+    }
+
+    return stat;
+}
+
+export function getLaserStat(chart: Chart, timing: Timing): LaserOnlyStat & OneHandStat {
+    return {
+        ...getLaserOnlyStat(chart, timing),
+        ...getOneHandStat(chart, timing),
+    };
 }

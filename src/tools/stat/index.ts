@@ -49,7 +49,7 @@ export function getStat(chart: Chart, timing?: Timing): Stat {
     if(!timing) timing = chart.getTiming();
     const stat: Stat = {
         ...getButtonOnlyStat(chart, timing),
-        ...getLaserStat(chart),
+        ...getLaserStat(chart, timing),
         ...getBeatStat(chart, timing),
     }
 

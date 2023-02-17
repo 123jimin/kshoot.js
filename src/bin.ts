@@ -56,13 +56,15 @@ class App {
 
         console.log(
             "seconds"
-            + "\tchips\tholds\thold_chains\tpeak_note_density\tpeak_note_chain_density"
-            + "\tmoving_lasers\tmoving_laser_chains\tslams\tone_hand_notes\tone_hand_note_chains\twrong_side_notes\twrong_side_note_chains"
+            + "\tchips\tholds\thold_chains\tpeak\tpeak_density"
+            + "\tslant_chains\tslams\tsolo_slams\tslam_tris\tslam_jolts\t1way\t1way_unint\tmoving"
+            + "\tone_hand_notes\tone_hand_note_chains\twrong_side_notes\twrong_side_note_chains"
             + "\tbc_jacks\tadlr_jacks\tbpm_change_intensity");
         const features = [
             (this.chart.getDuration()/1000).toFixed(3),
             stat.chips, stat.holds, stat.hold_chains, stat.peak_note_density, stat.peak_note_chain_density,
-            stat.moving_lasers, stat.moving_laser_chains, stat.slams, stat.one_hand_notes, 0, stat.wrong_side_notes, 0,
+            stat.slant_laser_chains, stat.slams, stat.solo_slams, stat.slam_then_triangles, stat.slam_jolts, stat.one_way_moving_lasers, stat.one_way_moving_uninterrupted_lasers, stat.moving_lasers,
+            stat.one_hand_notes, 0, stat.wrong_side_notes, 0,
             [1, 2].map((lane) => stat.by_button_lane[lane].jacks).reduce((x, y) => x+y), [0, 3, 4, 5].map((lane) => stat.by_button_lane[lane].jacks).reduce((x, y) => x+y), stat.bpm_change_intensity.toFixed(1),
         ];
         
