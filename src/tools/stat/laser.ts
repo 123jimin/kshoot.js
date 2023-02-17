@@ -1,8 +1,20 @@
 import type {
     Chart, Pulse, ButtonObject, LaserObject,
+    ButtonConduct, LaserConduct, LaserLane,
 } from "../../chart/index.js";
 
-import {isOnSide} from "./util.js";
+import { ButtonLane } from "../../chart/index.js";
+
+const isOnSide = (button_lane: ButtonLane, laser_lane: LaserLane): boolean => {
+    switch(button_lane) {
+        case ButtonLane.BT_A: return laser_lane === 0;
+        case ButtonLane.BT_B: return laser_lane === 0;
+        case ButtonLane.BT_C: return laser_lane === 1;
+        case ButtonLane.BT_D: return laser_lane === 1;
+        case ButtonLane.FX_L: return laser_lane === 0;
+        case ButtonLane.FX_R: return laser_lane === 1;
+    }
+}
 
 export interface LaserOnlyStat {
     /** moving lasers, excluding slams */

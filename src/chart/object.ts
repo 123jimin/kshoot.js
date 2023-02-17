@@ -1,6 +1,6 @@
 import * as kson from "../kson/index.js";
 
-export enum NoteLane {
+export enum ButtonLane {
     BT_A, BT_B, BT_C, BT_D,
     FX_L, FX_R,
 }
@@ -9,7 +9,7 @@ export type LaserLane = 0|1;
 
 /** One button, either short (length === 0n) or long (length > 0n). */
 export interface ButtonObject {
-    lane: NoteLane;
+    lane: ButtonLane;
     length: kson.Pulse;
 }
 

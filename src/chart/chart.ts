@@ -14,10 +14,11 @@ import type {
 } from "./object.js";
 
 export * from "./conduct.js";
-import {
-    type ButtonConduct, iterateButtonConducts,
-    type LaserConduct, iterateLaserConducts,
+import type {
+    ButtonConductWithoutLane, ButtonConduct,
+    LaserConductWithoutLane, LaserConduct,
 } from "./conduct.js";
+import { iterateButtonConducts, iterateLaserConducts } from "./conduct.js";
 
 export * from "./timing.js";
 import {Timing} from "./timing.js";
@@ -227,14 +228,14 @@ export class Chart implements kson.Kson {
 
     *buttonConducts(): Generator<[pulse: Pulse, conducts: ButtonConduct[]]> {
         const generators = [...this.note.bt, ...this.note.fx].map((notes) => iterateButtonConducts(notes));
-        for(const [pulse, conducts] of iterateAll<[Pulse, Omit<ButtonConduct, 'lane'>]>(...generators)) {
+        for(const [pulse, conducts] of iterateAll<[Pulse, ButtonConductWithoutLane]>(...generators)) {
             yield [pulse, conducts.map(([lane, conduct]) => Object.assign(conduct, {lane}))];
         }
     }
 
     *laserConducts(): Generator<[pulse: Pulse, conducts: LaserConduct[]]> {
         const generators = this.note.laser.map((notes) => iterateLaserConducts(notes));
-        for(const [pulse, conducts] of iterateAll<[Pulse, Omit<LaserConduct, 'lane'>]>(...generators)) {
+        for(const [pulse, conducts] of iterateAll<[Pulse, LaserConductWithoutLane]>(...generators)) {
             yield [pulse, conducts.map(([lane, conduct]) => Object.assign(conduct, {lane: lane as LaserLane}))];
         }
     }
