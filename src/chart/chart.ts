@@ -13,6 +13,12 @@ import type {
     ButtonObject, LaserObject, LaserLane,
 } from "./object.js";
 
+export * from "./conduct.js";
+import {
+    type ButtonConduct, iterateButtonConducts,
+    type LaserConduct, iterateLaserConducts,
+} from "./conduct.js";
+
 export * from "./timing.js";
 import {Timing} from "./timing.js";
 import type {
@@ -107,7 +113,7 @@ export class Chart implements kson.Kson {
     }
 
     /**
-     * Creates a {@link Timing} object, which can be used to query informations related to timing.
+     * Creates a {@link Timing} object, which can be used to query information related to timing.
      * @returns The timing object for this chart
      */
     getTiming(): Timing {
@@ -216,6 +222,20 @@ export class Chart implements kson.Kson {
             for(const laser_object of handleSection(section)) {
                 yield laser_object;
             }
+        }
+    }
+
+    *buttonConducts(): Generator<[pulse: Pulse, conducts: ButtonConduct[]]> {
+        const generators = [...this.note.bt, ...this.note.fx].map((notes) => iterateButtonConducts(notes));
+        for(const [pulse, conducts] of iterateAll<[Pulse, Omit<ButtonConduct, 'lane'>]>(...generators)) {
+            yield [pulse, conducts.map(([lane, conduct]) => Object.assign(conduct, {lane}))];
+        }
+    }
+
+    *laserConducts(): Generator<[pulse: Pulse, conducts: LaserConduct[]]> {
+        const generators = this.note.laser.map((notes) => iterateLaserConducts(notes));
+        for(const [pulse, conducts] of iterateAll<[Pulse, Omit<LaserConduct, 'lane'>]>(...generators)) {
+            yield [pulse, conducts.map(([lane, conduct]) => Object.assign(conduct, {lane: lane as LaserLane}))];
         }
     }
 

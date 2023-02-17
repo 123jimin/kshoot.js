@@ -1,9 +1,11 @@
 import type {
     Chart, Pulse, Timing,
+    ButtonConduct,
 } from "../../chart/index.js";
 
+import {ButtonConductAction} from "../../chart/index.js";
+
 import {PEAK_WINDOW} from "./common.js";
-import {type ButtonAction, ButtonActionKind, iterateButtonActions} from "./util.js";
 
 // 130BPM 16ths
 const MAX_JACK_INTERVAL = 15_000 / 130;
@@ -93,7 +95,7 @@ export function getButtonOnlyStat(chart: Chart, timing: Timing): ButtonOnlyStat 
         peak_note_chain_density: 0, peak_note_chain_density_range: [0n, 0n],
     };
 
-    const action_history: [time: number, pulse: Pulse, actions: ButtonAction[]][] = [];
+    const conduct_history: [time: number, pulse: Pulse, conducts: ButtonConduct[]][] = [];
     let window_begin_ind = 0;
 
     const hold_ends: [Pulse, Pulse, Pulse, Pulse, Pulse, Pulse] = [-1n, -1n, -1n, -1n, -1n, -1n];
@@ -105,45 +107,45 @@ export function getButtonOnlyStat(chart: Chart, timing: Timing): ButtonOnlyStat 
     
     let window_begin_pulse = 0n;
 
-    for(const [timing_info, actions] of timing.withTimingInfo(iterateButtonActions(chart))) {
-        while(window_begin_ind < action_history.length && action_history[window_begin_ind][0] + PEAK_WINDOW < timing_info.time) {
-            for(const discarded_action of action_history[window_begin_ind][2]) {
-                switch(discarded_action.kind) {
-                    case ButtonActionKind.Chip:
+    for(const [timing_info, conducts] of timing.withTimingInfo(chart.buttonConducts())) {
+        while(window_begin_ind < conduct_history.length && conduct_history[window_begin_ind][0] + PEAK_WINDOW < timing_info.time) {
+            for(const discarded_conduct of conduct_history[window_begin_ind][2]) {
+                switch(discarded_conduct.action) {
+                    case ButtonConductAction.Chip:
                         --curr_chips;
                         break;
-                    case ButtonActionKind.HoldStart:
-                        curr_hold_chains -= timing.getChains([window_begin_pulse, window_begin_pulse + discarded_action.length]);
-                        hold_ends[discarded_action.lane] = window_begin_pulse + discarded_action.length;
+                    case ButtonConductAction.HoldStart:
+                        curr_hold_chains -= timing.getChains([window_begin_pulse, window_begin_pulse + discarded_conduct.length]);
+                        hold_ends[discarded_conduct.lane] = window_begin_pulse + discarded_conduct.length;
                         break;
-                    case ButtonActionKind.HoldEnd:
-                        hold_ends[discarded_action.lane] = -1n;
+                    case ButtonConductAction.HoldEnd:
+                        hold_ends[discarded_conduct.lane] = -1n;
                         --curr_holds;
                         break;
                 }
             }
             
             ++window_begin_ind;
-            window_begin_pulse = window_begin_ind < action_history.length ? action_history[window_begin_ind][1] : timing_info.pulse;
+            window_begin_pulse = window_begin_ind < conduct_history.length ? conduct_history[window_begin_ind][1] : timing_info.pulse;
         }
 
-        for(const new_action of actions) {
-            switch(new_action.kind) {
-                case ButtonActionKind.Chip:
+        for(const new_conduct of conducts) {
+            switch(new_conduct.action) {
+                case ButtonConductAction.Chip:
                     ++curr_chips;
                     break;
-                case ButtonActionKind.HoldStart:
-                    hold_starts[new_action.lane] = timing_info.pulse;
+                case ButtonConductAction.HoldStart:
+                    hold_starts[new_conduct.lane] = timing_info.pulse;
                     ++curr_holds;
                     break;
-                case ButtonActionKind.HoldEnd:
-                    curr_hold_chains += timing.getChains([hold_starts[new_action.lane], timing_info.pulse]);
-                    hold_starts[new_action.lane] = -1n;
+                case ButtonConductAction.HoldEnd:
+                    curr_hold_chains += timing.getChains([hold_starts[new_conduct.lane], timing_info.pulse]);
+                    hold_starts[new_conduct.lane] = -1n;
                     break;
             }
         }
 
-        action_history.push([timing_info.time, timing_info.pulse, actions]);
+        conduct_history.push([timing_info.time, timing_info.pulse, conducts]);
 
         if(stat.peak_note_density < curr_chips + curr_holds) {
             stat.peak_note_density = curr_chips + curr_holds;
