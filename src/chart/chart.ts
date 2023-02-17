@@ -166,9 +166,9 @@ export class Chart implements kson.Kson {
     }
 
     /** Iterates through each laser segment, with lane (`0`: left, `1`: right) specified. */
-    laserNotes(lane: LaserLane, range?: PulseRange): Generator<[Pulse, LaserObject]>;
+    laserNotes(lane: LaserLane, range?: PulseRange): Generator<[pulse: Pulse, objects: LaserObject]>;
     /** Iterates through each laser segment. */
-    laserNotes(range?: PulseRange): Generator<[Pulse, LaserObject[]]>;
+    laserNotes(range?: PulseRange): Generator<[pulse: Pulse, objects: LaserObject[]]>;
 
     *laserNotes(lane_or_range?: LaserLane|PulseRange, range?: PulseRange): Generator<[Pulse, LaserObject]|[Pulse, LaserObject[]]> {
         if(lane_or_range == null || Array.isArray(lane_or_range)) {

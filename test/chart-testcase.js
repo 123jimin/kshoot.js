@@ -1,6 +1,6 @@
 import {assert} from 'chai';
 
-import {PULSES_PER_WHOLE, kson} from "../dist/index.js";
+import {PULSES_PER_WHOLE, kson, LaserConductAction} from "../dist/index.js";
 import {TEST, assertLaserEqual} from "./_common.js";
 
 TEST("testcase/01-nov.ksh", function(ctx) {
@@ -189,6 +189,23 @@ TEST("testcase/03-nov.ksh", function(ctx) {
         assert.deepStrictEqual(chart.note.fx.map((notes) => notes.size), [0, 0], "no fx note");
     });
 
+    it("should never contain incorrect laser conducts", function() {
+        const {chart} = ctx;
+        for(const [pulse, lasers] of chart.laserConducts()) {
+            for(const laser of lasers) {
+                assert.isTrue(laser.lane === 0 || laser.lane === 1, `[${pulse}, ${laser.lane}] lane must be either 0 or 1`);
+                assert.isNotTrue(laser.length_before != null && laser.length_before < 0n, `[${pulse}, ${laser.lane}] length_before must be non-negative`)
+                assert.isNotTrue((laser.action === LaserConductAction.Slam || laser.action === LaserConductAction.End) && (laser.length_after != null || laser.dir_after != null),
+                    `[${pulse}, ${laser.lane}] after values must not exist for Slam or End actions`)
+                assert.isNotTrue(laser.length_after != null && laser.length_after < 0n, `[${pulse}, ${laser.lane}] length_after must be non-negative`)
+                assert.isNotTrue((laser.action === LaserConductAction.Slam || laser.action === LaserConductAction.Start) && (laser.length_before != null || laser.dir_before != null),
+                    `[${pulse}, ${laser.lane}] before values must not exist for Slam or Start actions`)
+                assert.isNotTrue(laser.action === LaserConductAction.Continue && laser.dir_before === laser.dir_after && laser.dir_slam == null,
+                    `[${pulse}, ${laser.lane}] continue conducts must not be trivial`);
+            }
+        }
+    });
+
     it("should contain correct lasers", function() {
         const {chart} = ctx;
 
@@ -270,4 +287,30 @@ TEST("testcase/03-nov.ksh", function(ctx) {
             [2n * PULSES_PER_WHOLE + 7n * (PULSES_PER_WHOLE/8n), [{lane: 1, width: 1, length: PULSES_PER_WHOLE/8n, section_pulse: 2n * PULSES_PER_WHOLE + PULSES_PER_WHOLE/2n, curve: [0, 0], v: [0.5, 0.5], ve: 1}]],
         ], "partial lasers");
     })
+});
+
+TEST("testcase/03-adv.ksh", function(ctx) {
+    it("should contain no note", function() {
+        const {chart} = ctx;
+
+        assert.deepStrictEqual(chart.note.bt.map((notes) => notes.size), [0, 0, 0, 0], "no bt note");
+        assert.deepStrictEqual(chart.note.fx.map((notes) => notes.size), [0, 0], "no fx note");
+    });
+
+    it("should never contain incorrect laser conducts", function() {
+        const {chart} = ctx;
+        for(const [pulse, lasers] of chart.laserConducts()) {
+            for(const laser of lasers) {
+                assert.isTrue(laser.lane === 0 || laser.lane === 1, `[${pulse}, ${laser.lane}] lane must be either 0 or 1`);
+                assert.isNotTrue(laser.length_before != null && laser.length_before < 0n, `[${pulse}, ${laser.lane}] length_before must be non-negative`)
+                assert.isNotTrue((laser.action === LaserConductAction.Slam || laser.action === LaserConductAction.End) && (laser.length_after != null || laser.dir_after != null),
+                    `[${pulse}, ${laser.lane}] after values must not exist for Slam or End actions`)
+                assert.isNotTrue(laser.length_after != null && laser.length_after < 0n, `[${pulse}, ${laser.lane}] length_after must be non-negative`)
+                assert.isNotTrue((laser.action === LaserConductAction.Slam || laser.action === LaserConductAction.Start) && (laser.length_before != null || laser.dir_before != null),
+                    `[${pulse}, ${laser.lane}] before values must not exist for Slam or Start actions`)
+                assert.isNotTrue(laser.action === LaserConductAction.Continue && laser.dir_before === laser.dir_after && laser.dir_slam == null,
+                    `[${pulse}, ${laser.lane}] continue conducts must not be trivial`);
+            }
+        }
+    });
 });

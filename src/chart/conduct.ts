@@ -70,6 +70,7 @@ export interface LaserConductContinue {
     action: LaserConductAction.Continue;
     length_before: Pulse;
     length_after: Pulse;
+    // It is gauranteed that dir_before === dir_after && dir_slam == null will never be satisfied.
     dir_before: LaserConductDir;
     dir_slam?: LaserConductDir;
     dir_after: LaserConductDir;
@@ -139,8 +140,16 @@ export function* iterateLaserConducts(sections: kson.LaserSections): Generator<[
             else return [prev_pulse, {action: LaserConductAction.End, length_before, dir_slam, dir_before: dir_before as LaserConductDir}];
         }
 
-        if(dir_slam == null) return [prev_pulse, {action: LaserConductAction.Continue, length_before, length_after, dir_before, dir_after}];
-        else return [prev_pulse, {action: LaserConductAction.Continue, length_before, length_after, dir_before, dir_slam, dir_after}];
+        if(prev_state == null) throw new Error("Invalid internal state!"); // dir_after is not null => next_laser is not null => prev_state is not null
+
+        if(dir_slam) return [prev_pulse, {action: LaserConductAction.Continue, length_before, length_after, dir_before, dir_slam, dir_after}];
+
+        if(dir_before === dir_after) {
+            prev_state.length_before += length_before;
+            return null;
+        }
+
+        return [prev_pulse, {action: LaserConductAction.Continue, length_before, length_after, dir_before, dir_after}];
     }
 
     for(const [section_pulse, section_points] of sections) {

@@ -15,7 +15,7 @@ These charts have been created to test programs handling KSH and/or KSON charts.
 | `(02-exh)` | Long-note button test. Contains every overlap combinations. |
 | `(02-mxm)` | Long-note button test with various FX effects. |
 | `03-nov` | Basic laser test. Contains simple laser patterns. |
-| `(03-adv)` | Basic laser test. Contains a bit more complex laser patterns. |
+| `03-adv` | Basic laser test. Contains a bit more complex laser patterns. |
 | `(03-exh)` | Laser test with complex laser patterns and wide lasers. |
 | `(03-mxm)` | Laser test with various FX effects. |
 | `(04-nov)` | Varying BPMs. Contains notes, but no lasers. |
