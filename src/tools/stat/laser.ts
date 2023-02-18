@@ -1,20 +1,17 @@
 import type {
-    Chart, Timing, Pulse, ButtonConduct, LaserConduct, LaserLane
+    Chart, Timing, Pulse, Conduct, ButtonConduct, LaserConduct, LaserLane
 } from "../../chart/index.js";
 
-import { LaserConductAction } from "../../chart/index.js";
+import { ButtonConductAction, LaserConductAction } from "../../chart/index.js";
 
 import { ButtonLane } from "../../chart/index.js";
 
-const isOnSide = (button_lane: ButtonLane, laser_lane: LaserLane): boolean => {
-    switch(button_lane) {
-        case ButtonLane.BT_A: return laser_lane === 0;
-        case ButtonLane.BT_B: return laser_lane === 0;
-        case ButtonLane.BT_C: return laser_lane === 1;
-        case ButtonLane.BT_D: return laser_lane === 1;
-        case ButtonLane.FX_L: return laser_lane === 0;
-        case ButtonLane.FX_R: return laser_lane === 1;
-    }
+const getSameSideLaser = (button_lane: ButtonLane): LaserLane => {
+    return button_lane === ButtonLane.BT_A || button_lane === ButtonLane.BT_B || button_lane === ButtonLane.FX_L ? 0 : 1;
+}
+
+const getOppositeSideLaser = (button_lane: ButtonLane): LaserLane => {
+    return button_lane === ButtonLane.BT_A || button_lane === ButtonLane.BT_B || button_lane === ButtonLane.FX_L ? 1 : 0;
 }
 
 export interface LaserOnlyStat {
@@ -103,53 +100,88 @@ export function getOneHandStat(chart: Chart, timing: Timing): OneHandStat {
         wrong_side_notes: 0,
     };
 
-    // TODO: implement it
+    const conductSorter = (priority: (x: Conduct) => number) => (x: Conduct, y: Conduct): number => priority(x) - priority(y);
 
-    const button_conduct_it = chart.buttonConducts();
-    let button_conduct: [Pulse, ButtonConduct[]]|undefined = button_conduct_it.next().value;
+    type ButtonState = OneHandState | null;
+    const button_states: Record<ButtonLane, ButtonState> = [null, null, null, null, null, null];
 
-    const laser_conduct_it = chart.laserConducts();
-    let laser_conduct: [Pulse, LaserConduct[]]|undefined = laser_conduct_it.next().value;
+    const laser_states: Record<LaserLane, boolean> = [false, false];
 
-    const progressButton = (): void => {
-        button_conduct = button_conduct_it.next().value;
-    };
-
-    const progressLaser = (): void => {
-        laser_conduct = laser_conduct_it.next().value;
-    };
-
-    while(button_conduct || laser_conduct) {
-        if(laser_conduct == null) {
-            while(button_conduct) {
-                progressButton();
+    for(const [pulse, conducts] of chart.conducts()) {
+        conducts.sort(conductSorter((x: Conduct): number => {
+            switch(x.kind) {
+                case 'laser':
+                    switch(x.action) {
+                        case LaserConductAction.Slam: return 0;
+                        case LaserConductAction.Start: return 1;
+                        case LaserConductAction.Continue: return 2;
+                        case LaserConductAction.End: return 4;
+                    }
+                    break;
+                case 'button':
+                    return 3;
+                    break;
             }
-            break;
-        }
+        }));
 
-        if(button_conduct == null) {
-            while(laser_conduct) {
-                progressLaser();
-            }
-            break;
-        }
+        const is_laser_active: [boolean, boolean] = [laser_states[0], laser_states[1]];
 
-        if(button_conduct[0] < laser_conduct[0]) {
-            while(button_conduct && button_conduct[0] < laser_conduct[0]) {
-                progressButton();
+        for(const conduct of conducts) {
+            switch(conduct.kind) {
+                case 'laser': {
+                    for(const button_lane_key in button_states) {
+                        const button_lane = (+button_lane_key) as ButtonLane;
+                        if(button_states[button_lane] == null)
+                            continue;
+                        if(button_states[button_lane] === OneHandState.None)
+                            button_states[button_lane] = OneHandState.OneHand;
+                        if(button_states[button_lane] === OneHandState.OneHand && getSameSideLaser(+button_lane) === conduct.lane)
+                            button_states[button_lane] = OneHandState.HandTrip;
+                    }
+                    switch(conduct.action) {
+                        case LaserConductAction.Slam:
+                            is_laser_active[conduct.lane] = true
+                            break;
+                        case LaserConductAction.Start:
+                            is_laser_active[conduct.lane] = laser_states[conduct.lane] = true;
+                            break;
+                        case LaserConductAction.End:
+                            is_laser_active[conduct.lane] = laser_states[conduct.lane] = false;
+                            break;
+                    }
+                    break;
+                }
+                case 'button': {
+                    switch(conduct.action) {
+                        case ButtonConductAction.Chip:
+                            if(is_laser_active[0] || is_laser_active[1]) {
+                                ++stat.one_hand_notes;
+                            }
+                            if(is_laser_active[getSameSideLaser(conduct.lane)]) {
+                                ++stat.wrong_side_notes;
+                            }
+                            break;
+                        case ButtonConductAction.HoldStart:
+                            button_states[conduct.lane] = is_laser_active[getSameSideLaser(conduct.lane)] ? OneHandState.HandTrip :
+                                is_laser_active[getOppositeSideLaser(conduct.lane)] ? OneHandState.OneHand : OneHandState.None; 
+                            break;
+                        case ButtonConductAction.HoldEnd:
+                            switch(button_states[conduct.lane]) {
+                                case OneHandState.OneHand:
+                                    ++stat.one_hand_notes;
+                                    break;
+                                case OneHandState.HandTrip:
+                                    ++stat.one_hand_notes;
+                                    ++stat.wrong_side_notes;
+                                    break;
+                            }
+                            button_states[conduct.lane] = null;
+                            break;
+                    }
+                    break;
+                }
             }
-            continue;
         }
-
-        if(laser_conduct[0] < button_conduct[0]) {
-            while(laser_conduct && laser_conduct[0] < button_conduct[0]) {
-                progressLaser();
-            }
-            continue;
-        }
-        
-        button_conduct = button_conduct_it.next().value;
-        laser_conduct = laser_conduct_it.next().value;
     }
 
     return stat;

@@ -15,6 +15,7 @@ import type {
 
 export * from "./conduct.js";
 import type {
+    Conduct,
     ButtonConductWithoutLane, ButtonConduct,
     LaserConductWithoutLane, LaserConduct,
 } from "./conduct.js";
@@ -226,6 +227,9 @@ export class Chart implements kson.Kson {
         }
     }
 
+    /**
+     * Iterates through each {@link ButtonConduct}, which represents a player's action at a moment.
+     */
     *buttonConducts(): Generator<[pulse: Pulse, conducts: ButtonConduct[]]> {
         const generators = [...this.note.bt, ...this.note.fx].map((notes) => iterateButtonConducts(notes));
         for(const [pulse, conducts] of iterateAll<[Pulse, ButtonConductWithoutLane]>(...generators)) {
@@ -233,10 +237,33 @@ export class Chart implements kson.Kson {
         }
     }
 
+    /**
+     * Iterates through each {@link LaserConduct}, which represents a player's action at a moment.
+     */
     *laserConducts(): Generator<[pulse: Pulse, conducts: LaserConduct[]]> {
         const generators = this.note.laser.map((notes) => iterateLaserConducts(notes));
         for(const [pulse, conducts] of iterateAll<[Pulse, LaserConductWithoutLane]>(...generators)) {
             yield [pulse, conducts.map(([lane, conduct]) => Object.assign(conduct, {lane: lane as LaserLane}))];
+        }
+    }
+
+    /**
+     * Iterates through each {@link Conduct}, which represents a player's action at a moment.
+     */
+    *conducts(): Generator<[pulse: Pulse, conducts: Conduct[]]> {
+        const button_generators = [...this.note.bt, ...this.note.fx].map((notes) => iterateButtonConducts(notes));
+        const generators = [
+            ...button_generators,
+            ...this.note.laser.map((notes) => iterateLaserConducts(notes)),
+        ];
+        for(const [pulse, conducts] of iterateAll<[Pulse, ButtonConductWithoutLane|LaserConductWithoutLane]>(...generators)) {
+            yield [pulse, conducts.map<Conduct>(([lane, conduct]) => {
+                if(lane < button_generators.length) {
+                    return Object.assign(conduct as ButtonConductWithoutLane, {kind: 'button', lane} as const);
+                } else {
+                    return Object.assign(conduct as LaserConductWithoutLane, {kind: 'laser', lane: (lane - button_generators.length) as LaserLane} as const);
+                }
+            })];
         }
     }
 

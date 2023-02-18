@@ -1,5 +1,5 @@
 /**
- * Conducts represent a player's movement at a moment.
+ * Conducts represent a player's action at a moment.
  * For example, a `ButtonObject` for a long note corresponds to two instructions (`HoldStart` and `HoldEnd`).
  */
 
@@ -51,7 +51,14 @@ export function getLaserConductDir(graph_value: Readonly<kson.GraphValue>): Lase
 }
 
 export enum LaserConductAction {
-    Slam, Start, Continue, End,
+    /** Slam without a slant after or before */
+    Slam,
+    /** Start laser, possibly with a slam */
+    Start,
+    /** Either a slam in the middle or a turn in the other direction */
+    Continue,
+    /** End laser, possibly with a slam */
+    End,
 }
 
 export interface LaserConductSlam {
