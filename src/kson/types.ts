@@ -95,7 +95,9 @@ export interface BGMPreviewInfo {
     duration: number;
 }
 
-export interface LegacyBGMInfo {}
+export interface LegacyBGMInfo {
+    fp_filenames: string[];
+}
 
 export interface KeySoundInfo {
     fx?: KeySoundFXInfo;
@@ -114,15 +116,31 @@ export interface KeySoundInvokeFX {
     vol: number;
 }
 
-export interface KeySoundLaserInfo {}
+export interface KeySoundLaserInfo {
+    vol: Iterable<ByPulse<number>>;
+    slam_event: KeySoundInvokeListLaser;
+    legacy?: KeySoundLaserLegacyInfo;
+}
 
-export interface KeySoundInvokeListLaser {}
+export interface KeySoundInvokeListLaser {
+    slam_up: Iterable<Pulse>;
+    slam_down: Iterable<Pulse>;
+    slam_swing: Iterable<Pulse>;
+    slam_mute: Iterable<Pulse>;
+}
 
-export interface KeySoundLaserLegacyInfo {}
+export interface KeySoundLaserLegacyInfo {
+    vol_auto?: boolean;
+}
 
-export interface AudioEffectInfo {}
+export interface AudioEffectInfo {
+    fx: AudioEffectFXInfo;
+    laser: AudioEffectLaserInfo;
+}
 
-export interface AudioEffectFXInfo {}
+export interface AudioEffectFXInfo { /* TODO */ }
+
+export interface AudioEffectLaserInfo { /* TODO */ }
 
 /* camera */
 export interface CameraInfo {}

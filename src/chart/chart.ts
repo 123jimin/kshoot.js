@@ -254,7 +254,7 @@ export class Chart implements kson.Kson {
         const button_generators = [...this.note.bt, ...this.note.fx].map((notes) => iterateButtonConducts(notes));
         const generators = [
             ...button_generators,
-            ...this.note.laser.map((notes) => iterateLaserConducts(notes)),
+            ...this.note.laser.map((notes: kson.LaserSections) => iterateLaserConducts(notes)),
         ];
         for(const [pulse, conducts] of iterateAll<[Pulse, ButtonConductWithoutLane|LaserConductWithoutLane]>(...generators)) {
             yield [pulse, conducts.map<Conduct>(([lane, conduct]) => {

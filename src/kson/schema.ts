@@ -117,14 +117,41 @@ export const KeySoundInvokeListFX = z.record(z.string(), z.tuple([
 export const KeySoundFXInfo = z.object({
     chip_event: KeySoundInvokeListFX.default({}),
 });
-export const KeySoundLaserInfo = z.object({});
+
+export const KeySoundInvokeListLaser = z.object({
+    slam_up: z.array(Pulse).default([]),
+    slam_down: z.array(Pulse).default([]),
+    slam_swing: z.array(Pulse).default([]),
+    slam_mute: z.array(Pulse).default([]),
+});
+
+export const KeySoundLaserLegacyInfo = z.object({
+    vol_auto: z.coerce.boolean().optional(),
+});
+
+export const KeySoundLaserInfo = z.object({
+    vol: toSortedList(ByPulse(z.coerce.number().finite().nonnegative())).default([[0n, 0.5]]),
+    slam_event: KeySoundInvokeListLaser.default({}),
+    legacy: KeySoundLaserLegacyInfo.optional(),
+});
 
 export const KeySoundInfo = z.object({
     fx: KeySoundFXInfo.default({}),
     laser: KeySoundLaserInfo.default({}),
 });
 
-export const AudioEffectInfo = z.object({});
+export const AudioEffectFXInfo = z.object({
+    // TODO
+});
+
+export const AudioEffectLaserInfo = z.object({
+    // TODO
+});
+
+export const AudioEffectInfo = z.object({
+    fx: AudioEffectFXInfo.default({}),
+    laser: AudioEffectLaserInfo.default({}),
+});
 
 export const AudioInfo = z.object({
     bgm: BGMInfo.default({}),
