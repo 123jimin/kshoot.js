@@ -160,8 +160,27 @@ export const AudioInfo = z.object({
 });
 
 /* camera */
+export const TiltInfo = z.object({
+    scale: toSortedList(ByPulse(z.coerce.number().finite())).default([[0n, 1.0]]),
+    manual: toSortedList(ByPulse(toSortedList(GraphSectionPoint))).default([]),
+    keep: toSortedList(ByPulse(z.coerce.boolean())).default([[0n, false]]),
+});
+
+export const CamInfo = z.object({});
+
+export const CameraInfo = z.object({
+    tilt: TiltInfo.default({}),
+    cam: CamInfo.default({}),
+});
 
 /* bg */
+export const LegacyBGInfo = z.object({});
+
+export const BGInfo = z.object({
+    filename: z.coerce.string().optional(),
+    offset: z.coerce.number().finite().default(0),
+    legacy: LegacyBGInfo.optional(),
+});
 
 /* editor */
 export const EditorInfo = z.object({

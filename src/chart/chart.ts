@@ -100,7 +100,7 @@ export class Chart implements kson.Kson {
 
     /**
      * Creates a chart object, optionally initialized to given KSON data.
-     * @param [kson_obj] Initial KSON data (**this will be shallow-copied**)
+     * @param [kson_obj] Initial KSON data
      */
     constructor(kson_obj?: Readonly<kson.Kson>) {
         if(kson_obj) this.setKSON(kson_obj);
@@ -445,14 +445,14 @@ export class Chart implements kson.Kson {
         if(!kson_obj) kson_obj = kson.schema.Kson.parse({});
 
         this.version = kson_obj.version;
-        this.meta = kson_obj.meta;
+        this.meta = kson.schema.MetaInfo.parse(kson_obj.meta);
         this.beat = kson.schema.BeatInfo.parse(kson_obj.beat);
         this.note = kson.schema.NoteInfo.parse(kson_obj.note);
 
-        if(kson_obj.gauge != null) this._gauge = kson_obj.gauge;
+        if(kson_obj.gauge != null) this._gauge = kson.schema.GaugeInfo.parse(kson_obj.gauge);
         if(kson_obj.audio != null) this._audio = kson.schema.AudioInfo.parse(kson_obj.audio);
-        if(kson_obj.camera != null) this._camera = kson_obj.camera;
-        if(kson_obj.bg != null) this._bg = kson_obj.bg;
+        if(kson_obj.camera != null) this._camera = kson.schema.CameraInfo.parse(kson_obj.camera);
+        if(kson_obj.bg != null) this._bg = kson.schema.BGInfo.parse(kson_obj.bg);
         if(kson_obj.editor != null) this._editor = kson.schema.EditorInfo.parse(kson_obj.editor);
         if(kson_obj.compat != null) this.compat = kson.schema.CompatInfo.parse(kson_obj.compat);
         if(kson_obj.impl != null) this.impl = kson_obj.impl;

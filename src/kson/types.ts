@@ -143,10 +143,29 @@ export interface AudioEffectFXInfo { /* TODO */ }
 export interface AudioEffectLaserInfo { /* TODO */ }
 
 /* camera */
-export interface CameraInfo {}
+export interface CameraInfo {
+    tilt: TiltInfo;
+    cam: CamInfo;
+}
+
+export interface TiltInfo {
+    scale: Iterable<ByPulse<number>>;
+    manual: Iterable<ByPulse<Iterable<GraphSectionPoint>>>;
+    keep: Iterable<ByPulse<boolean>>;
+}
+
+export interface CamInfo {
+
+}
 
 /* bg */
-export interface BGInfo {}
+export interface BGInfo {
+    filename?: string;
+    offset: number;
+    legacy?: LegacyBGInfo;
+}
+
+export interface LegacyBGInfo { /* TODO */ }
 
 /* editor */
 export interface EditorInfo {
