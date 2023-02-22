@@ -91,6 +91,24 @@ export function max<T>(...values: T[]): T|undefined {
     return curr_max;
 }
 
+export function gcd<T extends number|bigint>(...values: T[]): T {
+    if(values.length <= 1) return values[0];
+    let x: T = values[0]; if(x < 0) x = -x as T;
+    for(let i=1; i<values.length; ++i) {
+        let y: T = values[i];
+        if(y < 0) y = -y as T;
+        if(x == 0) {
+            x = y; continue;
+        }
+        while(x > 0) {
+            [x, y] = [y%x as T, x];
+        }
+        x = y;
+        if(x == 1) return x;
+    }
+    return x;
+}
+
 export function camelToSnake(s: string): string {
     return s.replace(/[A-Z]/g, (ch: string, offset: number) => (offset === 0 ? '' : '_') + ch.toLowerCase());
 }

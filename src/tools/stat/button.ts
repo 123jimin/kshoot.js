@@ -1,9 +1,11 @@
+import {gcd} from "../../util.js";
+
 import type {
     Chart, Pulse, Timing,
     ButtonConduct,
 } from "../../chart/index.js";
 
-import {ButtonConductAction} from "../../chart/index.js";
+import {PULSES_PER_WHOLE, ButtonConductAction} from "../../chart/index.js";
 
 import {PEAK_WINDOW} from "./common.js";
 
@@ -21,13 +23,17 @@ export interface ButtonCountStat {
     buttons: number;
     /** `chips` + `hold_chains` */
     button_chains: number;
+    /** \# of n-th chip notes; `n === PULSES_PER_WHOLE/GCD(PULSES_PER_WHOLE, pulse_from_beginning_of_measure)` */
+    note_beat_histogram: {[denominator: number]: number};
 
     jacks: number;
 }
 
 export type ButtonCountStatByLane = [ButtonCountStat, ButtonCountStat, ButtonCountStat, ButtonCountStat, ButtonCountStat, ButtonCountStat];
 
-export function createButtonCountStat(): ButtonCountStat { return {chips: 0, holds: 0, hold_chains: 0, buttons: 0, button_chains: 0, jacks: 0}; }
+export function createButtonCountStat(): ButtonCountStat {
+    return {chips: 0, holds: 0, hold_chains: 0, buttons: 0, button_chains: 0, note_beat_histogram: {}, jacks: 0};
+}
 export function createButtonCountStatByLane(): ButtonCountStatByLane { return ([0, 1, 2, 3, 4, 5] as const).map(() => createButtonCountStat()) as ButtonCountStatByLane; }
 
 export interface ButtonOnlyStat extends ButtonCountStat {
@@ -46,19 +52,30 @@ export function getButtonCountStats(chart: Chart, timing: Timing): ButtonCountSt
     };
 
     const addStat = (key: keyof ButtonCountStat, lane: number, value: number): void => {
-        stat[key] += value;
-        stat.by_button_lane[lane][key] += value;
+        if(typeof stat[key] === 'number') {
+            (stat[key] as number) += value;
+            (stat.by_button_lane[lane][key] as number) += value;
+        }
+    };
+
+    const adNoteBeatHistogram = (histogram: {[denominator: number]: number}, pulse: Pulse): void => {
+        const denominator = Number(PULSES_PER_WHOLE / gcd(PULSES_PER_WHOLE, pulse));
+        if(denominator in histogram) ++histogram[denominator];
+        else histogram[denominator] = 1;
     };
 
     const front_note_time = [0, 0, 0, 0, 0, 0];
     const front_note_jack_count = [0, 0, 0, 0, 0, 0];
 
     for(const [timing_info, button_notes] of timing.withTimingInfo(chart.buttonNotes())) {
+        const pulse_from_curr_measure = timing_info.pulse - timing_info.measure.pulse;
         for(const note of button_notes) {
             if(note.length === 0n) {
                 addStat('chips', note.lane, 1);
                 addStat('buttons', note.lane, 1);
                 addStat('button_chains', note.lane, 1);
+                adNoteBeatHistogram(stat.note_beat_histogram, pulse_from_curr_measure);
+                adNoteBeatHistogram(stat.by_button_lane[note.lane].note_beat_histogram, pulse_from_curr_measure);
             } else {
                 const chains = chart.getChains([timing_info.pulse, timing_info.pulse + note.length]);
 

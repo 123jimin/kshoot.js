@@ -46,13 +46,18 @@ class App {
         const stat: kshoot.tools.stat.Stat = kshoot.tools.stat.getStat(chart);
 
         console.log('Chart stats:');
-        console.log(`- notes: ${stat.buttons} (${stat.button_chains})`);
+        console.log(`- notes: ${stat.buttons} (${stat.button_chains} chains, ${stat.chips} chips + ${stat.holds} holds)`);
         console.log(`- peak density: ${stat.peak_note_density}`);
         console.log(`- lasers: ${stat.moving_lasers + stat.slams}`);
         console.log(`- one hand: ${stat.one_hand_notes}`);
         console.log(`- hand trip: ${stat.wrong_side_notes}`);
         console.log(`- jacks: ${stat.jacks}`);
         console.log(`- sofulan: ${stat.bpm_differences.toFixed(1)} (${stat.bpm_changes} BPM changes)`);
+        console.log(`- beat histogram:`);
+
+        for(const key of Object.keys(stat.note_beat_histogram).sort((x, y) => +x - +y)) {
+            console.log(`${key}: ${stat.note_beat_histogram[+key]}`);
+        }
 
         console.log(
             "seconds"
