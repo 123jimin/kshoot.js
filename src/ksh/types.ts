@@ -140,8 +140,8 @@ export interface UnknownLine {
 export type Line = BarLine | CommentLine | OptionLine | ChartLine | AudioEffectLine | UnknownLine;
 
 export interface LaneSpinCommon {
-    direction: 'left' | 'right';
-    length: number;
+    direction: -1|1; // -1: left, +1: right
+    length: Pulse;
 }
 
 export interface LaneSpinNormal extends LaneSpinCommon {
@@ -156,7 +156,7 @@ export interface LaneSpinSwing extends LaneSpinCommon {
     type: 'swing'
     amplitude: number;
     repeat: number;
-    decay: 'normal'|'slow'|'off';
+    decay: 0|1|2;
 }
 
 export type LaneSpin = LaneSpinNormal | LaneSpinHalf | LaneSpinSwing;

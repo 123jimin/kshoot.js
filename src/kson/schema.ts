@@ -38,8 +38,10 @@ export const GraphPoint = z.union([
     z.tuple([Pulse, GraphValue]).transform<types.GraphPoint>(([y, v]) => [y, v, [0, 0]]),
     z.tuple([Pulse, GraphValue, GraphCurveValue])
 ]);
+export const GraphPointList = toSortedList(GraphPoint);
 
 export const GraphSectionPoint = GraphPoint;
+export const GraphSectionPointList = toSortedList(GraphSectionPoint);
 
 /* meta */
 export const MetaInfo = z.object({
@@ -66,7 +68,7 @@ export const TimeSig = z.tuple([z.coerce.number().positive().int(), z.coerce.num
 export const BeatInfo = z.object({
     bpm: toSortedList(ByPulse(z.coerce.number().finite().positive())).default([[0n, 120]]),
     time_sig: toSortedList(ByMeasureIdx(TimeSig)).default([[0n, [4, 4]]]),
-    scroll_speed: toSortedList(GraphPoint).default([[0n, [1.0, 1.0], [0.0, 0.0]]]),
+    scroll_speed: GraphPointList.default([[0n, [1.0, 1.0], [0.0, 0.0]]]),
 });
 
 /* gauge */
@@ -78,7 +80,7 @@ export const GaugeInfo = z.object({
 export const ButtonNote = z.union([Pulse.transform<types.ButtonNote>((y) => [y, 0n]), z.tuple([Pulse, Pulse])]);
 const ButtonNoteList = toSortedList(ButtonNote);
 
-export const LaserSection = z.tuple([Pulse, toSortedList(GraphSectionPoint), z.coerce.number().finite().positive().default(1)]);
+export const LaserSection = z.tuple([Pulse, GraphSectionPointList, z.coerce.number().finite().positive().default(1)]);
 const LaserSectionList = toSortedList(LaserSection);
 
 export const NoteInfo = z.object({
@@ -140,12 +142,22 @@ export const KeySoundInfo = z.object({
     laser: KeySoundLaserInfo.default({}),
 });
 
+export const AudioEffectDef = z.object({
+    type: z.string(),
+    v: z.record(z.string()),
+});
+
 export const AudioEffectFXInfo = z.object({
-    // TODO
+    def: z.record(AudioEffectDef).default({}),
+    param_change: z.record(z.record(toSortedList(ByPulse(z.string())))).default({}),
+    // TODO: long_event
 });
 
 export const AudioEffectLaserInfo = z.object({
-    // TODO
+    def: z.record(AudioEffectDef).default({}),
+    param_change: z.record(z.record(toSortedList(ByPulse(z.string())))).default({}),
+    pulse_event: z.record(z.array(Pulse)).default({}),
+    peaking_filter_delay: z.coerce.number().finite().default(0),
 });
 
 export const AudioEffectInfo = z.object({
@@ -162,11 +174,47 @@ export const AudioInfo = z.object({
 /* camera */
 export const TiltInfo = z.object({
     scale: toSortedList(ByPulse(z.coerce.number().finite())).default([[0n, 1.0]]),
-    manual: toSortedList(ByPulse(toSortedList(GraphSectionPoint))).default([]),
+    manual: toSortedList(ByPulse(GraphSectionPointList)).default([]),
     keep: toSortedList(ByPulse(z.coerce.boolean())).default([[0n, false]]),
 });
 
-export const CamInfo = z.object({});
+export const CamGraphs = z.object({
+    zoom: GraphPointList.default([[0n, 0]]),
+    shift_x: GraphPointList.default([[0n, 0]]),
+    rotation_x: GraphPointList.default([[0n, 0]]),
+    rotation_z: GraphPointList.default([[0n, 0]]),
+    "rotation_z.highway": GraphPointList.default([[0n, 0]]),
+    "rotation_z.jdgline": GraphPointList.default([[0n, 0]]),
+    center_split: GraphPointList.default([[0n, 0]]),
+});
+
+export const CamPatternInvokeSpin = z.tuple([Pulse, z.union([z.literal(-1), z.literal(1)]), Pulse]);
+
+export const CamPatternInvokeSwingValue = z.object({
+    scale: z.coerce.number().finite().default(1.0),
+    repeat: z.coerce.number().finite().nonnegative().int().default(1),
+    decay_order: z.coerce.number().finite().nonnegative().int().default(0),
+});
+export const CamPatternInvokeSwing = z.tuple([Pulse, z.union([z.literal(-1), z.literal(1)]), Pulse, CamPatternInvokeSwingValue]);
+
+export const CamPatternLaserInvokeList = z.object({
+    spin: toSortedList(CamPatternInvokeSpin).default([]),
+    half_spin: toSortedList(CamPatternInvokeSpin).default([]),
+    swing: toSortedList(CamPatternInvokeSwing).default([]),
+});
+
+export const CamPatternLaserInfo = z.object({
+    slam_event: CamPatternLaserInvokeList.default({}),
+});
+
+export const CamPatternInfo = z.object({
+    laser: CamPatternLaserInfo.default({}),
+});
+
+export const CamInfo = z.object({
+    body: CamGraphs.default({}),
+    pattern: CamPatternInfo.optional(),
+});
 
 export const CameraInfo = z.object({
     tilt: TiltInfo.default({}),
@@ -174,7 +222,36 @@ export const CameraInfo = z.object({
 });
 
 /* bg */
-export const LegacyBGInfo = z.object({});
+export const KSHBGInfo = z.object({
+    filename: z.string().optional(),
+});
+
+export const KSHLayerRotationInfo = z.object({
+    tilt: z.coerce.boolean().default(true),
+    spin: z.coerce.boolean().default(true),
+});
+
+export const KSHLayerInfo = z.object({
+    filename: z.string().optional(),
+    duration: z.coerce.number().finite().default(0),
+    rotation: KSHLayerRotationInfo.default({}),
+});
+
+export const KSHMovieInfo = z.object({
+    filename: z.string().optional(),
+    offset: z.coerce.number().finite().default(0),
+});
+
+export const KSHBGInfoPair = z.union([
+    z.tuple([KSHBGInfo]).transform<[types.KSHBGInfo, types.KSHBGInfo]>(([v]: [types.KSHBGInfo]) => [v, {...v}]),
+    z.tuple([KSHBGInfo, KSHBGInfo]),
+]);
+
+export const LegacyBGInfo = z.object({
+    bg: KSHBGInfoPair.optional(),
+    layer: KSHLayerInfo.optional(),
+    movie: KSHMovieInfo.optional(),
+});
 
 export const BGInfo = z.object({
     filename: z.coerce.string().optional(),
@@ -191,7 +268,7 @@ export const EditorInfo = z.object({
 export const KSHUnknownInfo = z.object({
     meta: z.record(z.coerce.string()).default({}),
     option: z.record(z.array(ByPulse(z.coerce.string()))).default({}),
-    line: toSortedList(ByPulse(z.coerce.string().default(""))).default([]),
+    line: z.array(ByPulse(z.coerce.string().default(""))).default([]),
 });
 
 export const CompatInfo = z.object({

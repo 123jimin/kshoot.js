@@ -56,17 +56,15 @@ TEST("community/hexagon-1.ksh", function(ctx) {
             total: 202,
         }, "gauge must be equal");
 
-        assert.deepStrictEqual(chart.audio, {
-            bgm: {
-                filename: "Astar.mp3",
-                vol: 0.75,
-                offset: 100,
-                preview: {
-                    offset: 42540,
-                    duration: 22000,
-                },
+        assert.deepStrictEqual(chart.audio.bgm, {
+            filename: "Astar.mp3",
+            vol: 0.75,
+            offset: 100,
+            preview: {
+                offset: 42540,
+                duration: 22000,
             },
-        }, "audio must be equal");
+        }, "audio.bgm must be equal");
     });
 
     it("should have the correct auxillary info", function() {
@@ -87,7 +85,7 @@ TEST("community/hexagon-1.ksh", function(ctx) {
         assert.strictEqual(chart.compat.ksh_version, "160", "ksh_version must be equal");
         assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
         assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
-        assert.strictEqual(chart.compat.ksh_unknown.line.size, 0, "no unknown line");
+        assert.strictEqual(chart.compat.ksh_unknown.line.length, 0, "no unknown line");
     });
 
     it("should have the correct median BPM", function() {
@@ -186,17 +184,15 @@ TEST("community/lyrium-1.ksh", function(ctx) {
             total: 0,
         }, "gauge must be equal");
 
-        assert.deepStrictEqual(chart.audio, {
-            bgm: {
-                filename: "song.ogg",
-                vol: 0.75,
+        assert.deepStrictEqual(chart.audio.bgm, {
+            filename: "song.ogg",
+            vol: 0.75,
+            offset: 0,
+            preview: {
                 offset: 0,
-                preview: {
-                    offset: 0,
-                    duration: 15000,
-                },
+                duration: 15000,
             },
-        }, "audio must be equal");
+        }, "audio.bgm must be equal");
     });
 
     it("should have the correct auxillary info", function() {
@@ -209,7 +205,7 @@ TEST("community/lyrium-1.ksh", function(ctx) {
         assert.strictEqual(chart.compat.ksh_version, "171", "ksh_version must be equal");
         assert.deepStrictEqual(chart.compat.ksh_unknown.meta, {}, "no unknown meta");
         assert.deepStrictEqual(chart.compat.ksh_unknown.option, {}, "no unknown option");
-        assert.strictEqual(chart.compat.ksh_unknown.line.size, 0, "no unknown line");
+        assert.strictEqual(chart.compat.ksh_unknown.line.length, 0, "no unknown line");
     });
 
     it("should contain the correct amounts of notes", function() {

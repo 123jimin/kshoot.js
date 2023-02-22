@@ -1,13 +1,19 @@
 import type {z} from 'zod';
 import type {IMapSource} from 'sorted-btree';
 
+// Utilities
 import type {SortedList} from "../sorted-list.js";
-import {iterateAll, min, max} from "../util.js";
+import {type JSONObject, iterateAll, min, max} from "../util.js";
 
+// File formats
 import * as ksh from "../ksh/index.js";
 import * as kson from "../kson/index.js";
-import {default as readKSH} from "./read-ksh.js";
 
+import {default as fromKSH} from "./from-ksh.js";
+import {default as toKSH} from "./to-ksh.js";
+import {default as toKSON} from "./to-kson.js";
+
+// Various structures
 export * from "./object.js";
 import type {
     ButtonObject, LaserObject, LaserLane,
@@ -27,6 +33,8 @@ import type {
     PulseRange, MeasureInfo, TimingInfo
 } from "./timing.js";
 
+export type ChartFormat = 'ksh'|'kson';
+
 export type Pulse = kson.Pulse;
 export const PULSES_PER_WHOLE = kson.PULSES_PER_WHOLE;
 
@@ -38,6 +46,8 @@ type ChartGaugeInfo = z.output<typeof kson.schema.GaugeInfo>;
 type ChartNoteInfo = z.output<typeof kson.schema.NoteInfo>;
 type ChartLaserSection = z.output<typeof kson.schema.LaserSection>;
 type ChartAudioInfo = z.output<typeof kson.schema.AudioInfo>;
+type ChartCameraInfo = z.output<typeof kson.schema.CameraInfo>;
+type ChartBGInfo = z.output<typeof kson.schema.BGInfo>;
 type ChartEditorInfo = z.output<typeof kson.schema.EditorInfo>;
 type ChartCompatInfo = z.output<typeof kson.schema.CompatInfo>;
 
@@ -50,13 +60,32 @@ export class Chart implements kson.Kson {
     note: ChartNoteInfo = kson.schema.NoteInfo.parse({});
     private _audio?: ChartAudioInfo;
     get audio(): ChartAudioInfo { return this._audio ?? (this._audio = kson.schema.AudioInfo.parse({})); }
-    private _camera?: kson.CameraInfo;
-    private _bg?: kson.BGInfo;
+    private _camera?: ChartCameraInfo;
+    get camera(): ChartCameraInfo { return this._camera ?? (this._camera = kson.schema.CameraInfo.parse({})); }
+    private _bg?: ChartBGInfo;
+    get bg(): ChartBGInfo { return this._bg ?? (this._bg = kson.schema.BGInfo.parse({})); }
     private _editor?: ChartEditorInfo;
     get editor(): ChartEditorInfo { return this._editor ?? (this._editor = kson.schema.EditorInfo.parse({})); }
     compat?: ChartCompatInfo;
     impl?: unknown;
     
+    /** Returns raw values what kson.schema.Chart would have returned, without filling missing fields. */
+    get raw(): z.output<typeof kson.schema.Chart> {
+        return {
+            version: this.version,
+            meta: this.meta,
+            beat: this.beat,
+            gauge: this._gauge,
+            note: this.note,
+            audio: this._audio,
+            camera: this._camera,
+            bg: this._bg,
+            editor: this._editor,
+            compat: this.compat,
+            impl: this.impl,
+        };
+    }
+
     /** Get a string representation of the difficulty */
     get difficulty_str(): string {
         const difficulty = this.meta.difficulty;
@@ -435,7 +464,7 @@ export class Chart implements kson.Kson {
         return last_bpm;
     }
 
-    /* Data */
+    /* Import/Export */
 
     /**
      * Set the chart data to given KSON object.
@@ -466,7 +495,7 @@ export class Chart implements kson.Kson {
      */
     static parseKSH(chart_str: string): Chart {
         const ksh_chart = ksh.parse(chart_str);
-        return readKSH(ksh_chart);
+        return fromKSH(ksh_chart);
     }
 
     /**
@@ -478,6 +507,16 @@ export class Chart implements kson.Kson {
     static parseKSON(chart_data: string|object): Chart {
         const chart_obj = (typeof chart_data === 'string' ? JSON.parse(chart_data[0] === '\uFEFF' ? chart_data.slice(1) : chart_data) : chart_data);
         return new Chart(kson.schema.Kson.parse(chart_obj));
+    }
+
+    toKSH(): ksh.Chart { return toKSH(this); }
+    toKSON(): JSONObject { return toKSON(this); }
+
+    export(format: ChartFormat): string {
+        switch(format) {
+            case 'ksh':  return ksh.Writer.serialize(this.toKSH());
+            case 'kson': return JSON.stringify(this.toKSON());
+        }
     }
 }
 

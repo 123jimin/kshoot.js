@@ -2,6 +2,10 @@ export type First<T> = T extends [infer Car, ...unknown[]] ? Car : never;
 export type Rest<T> = T extends [unknown, ...infer Cdr] ? Cdr : never;
 export type AsTuple<T> = [First<T>, ...Rest<T>];
 
+export type JSONValue = string | number | boolean | JSONObject | JSONArray;
+export interface JSONObject {[key: string]: JSONValue}
+export type JSONArray = JSONValue[];
+
 export function isIterable(x: unknown): x is Iterable<unknown> {
     if(x == null || (typeof x !== 'object')) return false;
     if(!(Symbol.iterator in x)) return false;
@@ -85,4 +89,8 @@ export function max<T>(...values: T[]): T|undefined {
     }
 
     return curr_max;
+}
+
+export function camelToSnake(s: string): string {
+    return s.replace(/[A-Z]/g, (ch: string, offset: number) => (offset === 0 ? '' : '_') + ch.toLowerCase());
 }

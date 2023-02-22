@@ -102,16 +102,16 @@ describe('ksh.Reader', function() {
             }, "parsing legacy FXs (Stop)");
             
             for(const [test_in, test_out] of [
-                ["@(12", {type: 'normal', direction: 'left', length: 12}],
-                ["@)34", {type: 'normal', direction: 'right', length: 34}],
-                ["@<56", {type: 'half', direction: 'left', length: 56}],
-                ["@>78", {type: 'half', direction: 'right', length: 78}],
-                ["S<90", {type: 'swing', direction: 'left', length: 90, amplitude: 250, repeat: 3, decay: 'normal'}],
-                ["S>192;111", {type: 'swing', direction: 'right', length: 192, amplitude: 111, repeat: 3, decay: 'normal'}],
-                ["S<42.6;222;5", {type: 'swing', direction: 'left', length: 42, amplitude: 222, repeat: 5, decay: 'normal'}],
-                ["S>321.2;123.4;56.7;1", {type: 'swing', direction: 'right', length: 321, amplitude: 123, repeat: 56, decay: 'slow'}],
-                ["S<1;-2;3;0", {type: 'swing', direction: 'left', length: 1, amplitude: 0, repeat: 3, decay: 'off'}],
-                ["S>4;5;6;7", {type: 'swing', direction: 'right', length: 4, amplitude: 5, repeat: 6, decay: 'normal'}],
+                ["@(12", {type: 'normal', direction: -1, length: 12n}],
+                ["@)34", {type: 'normal', direction: +1, length: 34n}],
+                ["@<56", {type: 'half', direction: -1, length: 56n}],
+                ["@>78", {type: 'half', direction: +1, length: 78n}],
+                ["S<90", {type: 'swing', direction: -1, length: 90n, amplitude: 250, repeat: 3, decay: 2}],
+                ["S>192;111", {type: 'swing', direction: +1, length: 192n, amplitude: 111, repeat: 3, decay: 2}],
+                ["S<42.6;222;5", {type: 'swing', direction: -1, length: 42n, amplitude: 222, repeat: 5, decay: 2}],
+                ["S>321.2;123.4;56.7;1", {type: 'swing', direction: +1, length: 321n, amplitude: 123, repeat: 56, decay: 1}],
+                ["S<1;-2;3;0", {type: 'swing', direction: -1, length: 1n, amplitude: 0, repeat: 3, decay: 0}],
+                ["S>4;5;6;7", {type: 'swing', direction: +1, length: 4n, amplitude: 5, repeat: 6, decay: 2}],
             ]) {
                 assert.deepStrictEqual(ksh.Reader.parseLine("0000|00|--" + test_in), {
                     type: 'chart',

@@ -27,12 +27,12 @@ const parseOption = (chunk: string): [string, string] => {
 
 const parseSpinHead = (spin_head: string): Pick<LaneSpin, 'type'|'direction'>|null => {
     switch(spin_head) {
-        case '@(': return {type: 'normal', direction: 'left'};
-        case '@)': return {type: 'normal', direction: 'right'};
-        case '@<': return {type: 'half', direction: 'left'};
-        case '@>': return {type: 'half', direction: 'right'};
-        case 'S<': return {type: 'swing', direction: 'left'};
-        case 'S>': return {type: 'swing', direction: 'right'};
+        case '@(': return {type: 'normal', direction: -1};
+        case '@)': return {type: 'normal', direction: +1};
+        case '@<': return {type: 'half', direction: -1};
+        case '@>': return {type: 'half', direction: +1};
+        case 'S<': return {type: 'swing', direction: -1};
+        case 'S>': return {type: 'swing', direction: +1};
         default: return null;
     }
 };
@@ -332,7 +332,7 @@ export default class Reader implements Chart {
                             line.spin = {
                                 type: spin_head.type,
                                 direction: spin_head.direction,
-                                length: safeParseInt(match[5]),
+                                length: BigInt(safeParseInt(match[5])),
                             };
                             break;
                         case 'swing': {
@@ -340,11 +340,13 @@ export default class Reader implements Chart {
                             line.spin = {
                                 type: 'swing',
                                 direction: spin_head.direction,
-                                length: safeParseInt(match[5]),
+                                length: BigInt(safeParseInt(match[5])),
                                 amplitude: safeParseInt(args[0] != null && args[0].trim() ? args[0] : '250'),
                                 repeat: safeParseInt(args[1] != null && args[1].trim() ? args[1] : '3'),
                                 decay: ((decay: number) => {
-                                    if(decay > 2) return 'normal'; return (['off', 'slow', 'normal'] as const)[decay] ?? 'off';
+                                    if(decay > 2) return 2;
+                                    if(decay === 1 || decay === 2) return decay;
+                                    return 0;
                                 })(safeParseInt(args[2] != null && args[2].trim() ? args[2] : '2')),
                             }
                             break;

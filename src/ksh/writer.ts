@@ -11,15 +11,19 @@ import {
 export default class Writer {
     static serializeLaneSpin(spin: LaneSpin): string {
         let spin_head = '';
-        switch(`${spin.length} ${spin.direction}`) {
-            case "normal left": spin_head = '@('; break;
-            case "normal right": spin_head = '@)'; break;
-            case "half left": spin_head = '@<'; break;
-            case "half right": spin_head = '@>'; break;
-            case "swing left": spin_head = 'S<'; break;
-            case "swing right": spin_head = 'S>'; break;
+        switch(`${spin.type}${spin.direction < 0 ? '<' : '>'}`) {
+            case "normal<": spin_head = '@('; break;
+            case "normal>": spin_head = '@)'; break;
+            case "half<": spin_head = '@<'; break;
+            case "half>": spin_head = '@>'; break;
+            case "swing<": spin_head = 'S<'; break;
+            case "swing>": spin_head = 'S>'; break;
         }
-        return `${spin_head}${spin.length}`;
+        if(spin.type === 'swing') {
+            return `${spin_head}${spin.length};${spin.amplitude};${spin.repeat};${spin.decay}`;
+        } else {
+            return `${spin_head}${spin.length}`;
+        }
     }
     static serializeLine(line: BarLine): string;
     static serializeLine(line: CommentLine): string;

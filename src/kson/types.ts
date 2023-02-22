@@ -138,9 +138,23 @@ export interface AudioEffectInfo {
     laser: AudioEffectLaserInfo;
 }
 
-export interface AudioEffectFXInfo { /* TODO */ }
+export interface AudioEffectFXInfo {
+    def: Record<string, AudioEffectDef>;
+    param_change: Record<string, Record<string, Iterable<ByPulse<string>>>>;
+    // TODO: long_event
+}
 
-export interface AudioEffectLaserInfo { /* TODO */ }
+export interface AudioEffectLaserInfo {
+    def: Record<string, AudioEffectDef>;
+    param_change: Record<string, Record<string, Iterable<ByPulse<string>>>>;
+    pulse_event: Record<string, Iterable<Pulse>>;
+    peaking_filter_delay: number;
+}
+
+export interface AudioEffectDef {
+    type: string;
+    v: Record<string, string>;
+}
 
 /* camera */
 export interface CameraInfo {
@@ -155,7 +169,40 @@ export interface TiltInfo {
 }
 
 export interface CamInfo {
+    body: CamGraphs;
+    pattern?: CamPatternInfo;
+}
 
+export interface CamGraphs { 
+    zoom: Iterable<GraphPoint>;
+    shift_x: Iterable<GraphPoint>;
+    rotation_x: Iterable<GraphPoint>;
+    rotation_z: Iterable<GraphPoint>;
+    "rotation_z.highway": Iterable<GraphPoint>;
+    "rotation_z.jdgline": Iterable<GraphPoint>;
+    center_split: Iterable<GraphPoint>;
+}
+
+export interface CamPatternInfo {
+    laser: CamPatternLaserInfo;
+}
+
+export interface CamPatternLaserInfo {
+    slam_event: CamPatternLaserInvokeList;
+}
+
+export interface CamPatternLaserInvokeList {
+    spin: Iterable<CamPatternInvokeSpin>;
+    half_spin: Iterable<CamPatternInvokeSpin>;
+    swing: Iterable<CamPatternInvokeSwing>;
+}
+
+export type CamPatternInvokeSpin = [y: Pulse, direction: -1|1, length: Pulse];
+export type CamPatternInvokeSwing = [y: Pulse, direction: -1|1, length: Pulse, v: CamPatternInvokeSwingValue];
+export interface CamPatternInvokeSwingValue {
+    scale: number;
+    repeat: number;
+    decay_order: number;
 }
 
 /* bg */
@@ -165,7 +212,31 @@ export interface BGInfo {
     legacy?: LegacyBGInfo;
 }
 
-export interface LegacyBGInfo { /* TODO */ }
+export interface LegacyBGInfo {
+    bg?: [KSHBGInfo, KSHBGInfo];
+    layer?: KSHLayerInfo;
+    movie?: KSHMovieInfo;
+}
+
+export interface KSHBGInfo {
+    filename?: string;
+}
+
+export interface KSHLayerInfo {
+    filename?: string;
+    duration: number;
+    rotation: KSHLayerRotationInfo;
+}
+
+export interface KSHLayerRotationInfo {
+    tilt: boolean;
+    spin: boolean;
+}
+
+export interface KSHMovieInfo {
+    filename?: string;
+    offset: number;
+}
 
 /* editor */
 export interface EditorInfo {
@@ -180,8 +251,8 @@ export interface CompatInfo {
 
 export interface KSHUnknownInfo {
     meta: {[name: string]: string};
-    option: {[name: string]: Iterable<ByPulse<string>>};
-    line: Iterable<ByPulse<string>>;
+    option: {[name: string]: ByPulse<string>[]};
+    line: ByPulse<string>[];
 }
 
 /* Common objects */
