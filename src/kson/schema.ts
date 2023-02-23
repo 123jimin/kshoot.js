@@ -4,25 +4,26 @@ import { VERSION } from "./types.js";
 import type * as types from "./types.js";
 
 import { isIterable } from "../util.js";
-import { SortedList } from "../sorted-list.js";
+import { SortedList as SortedListData } from "../sorted-list.js";
+import { Graph as GraphData } from "../graph.js";
 
-function toSortedList<T extends z.ZodTypeAny>(schema: T) {
+export function SortedList<T extends z.ZodTypeAny>(schema: T) {
     return z.preprocess((v) => {
         if(Array.isArray(v)) return v;
         if(isIterable(v)) return [...v];
         return v;
-    }, z.array(schema).transform((v) => new SortedList<z.output<T>>(v)));
+    }, z.array(schema).transform((v) => new SortedListData<z.output<T>>(v)));
 }
 
 export const Pulse = z.coerce.bigint();
 export const MeasureIdx = z.coerce.bigint();
 
 /* Common objects */
-function ByPulse<T extends z.ZodTypeAny>(schema: T) {
+export function ByPulse<T extends z.ZodTypeAny>(schema: T) {
     return z.tuple([Pulse, schema]);
 }
 
-function ByMeasureIdx<T extends z.ZodTypeAny>(schema: T) {
+export function ByMeasureIdx<T extends z.ZodTypeAny>(schema: T) {
     return z.tuple([MeasureIdx, schema]);
 }
 
@@ -38,10 +39,16 @@ export const GraphPoint = z.union([
     z.tuple([Pulse, GraphValue]).transform<types.GraphPoint>(([y, v]) => [y, v, [0, 0]]),
     z.tuple([Pulse, GraphValue, GraphCurveValue])
 ]);
-export const GraphPointList = toSortedList(GraphPoint);
-
 export const GraphSectionPoint = GraphPoint;
-export const GraphSectionPointList = toSortedList(GraphSectionPoint);
+
+export const Graph = z.preprocess((v) => {
+    if(Array.isArray(v)) return v;
+    if(isIterable(v)) return [...v];
+    return v;
+}, z.array(GraphPoint).transform((v) => new GraphData(v)));
+
+export const GraphPointList = Graph;
+export const GraphSectionPointList = Graph;
 
 /* meta */
 export const MetaInfo = z.object({
@@ -66,8 +73,8 @@ export const MetaInfo = z.object({
 export const TimeSig = z.tuple([z.coerce.number().positive().int(), z.coerce.number().positive().int()]);
 
 export const BeatInfo = z.object({
-    bpm: toSortedList(ByPulse(z.coerce.number().finite().positive())).default([[0n, 120]]),
-    time_sig: toSortedList(ByMeasureIdx(TimeSig)).default([[0n, [4, 4]]]),
+    bpm: SortedList(ByPulse(z.coerce.number().finite().positive())).default([[0n, 120]]),
+    time_sig: SortedList(ByMeasureIdx(TimeSig)).default([[0n, [4, 4]]]),
     scroll_speed: GraphPointList.default([[0n, [1.0, 1.0], [0.0, 0.0]]]),
 });
 
@@ -78,10 +85,10 @@ export const GaugeInfo = z.object({
 
 /* note */
 export const ButtonNote = z.union([Pulse.transform<types.ButtonNote>((y) => [y, 0n]), z.tuple([Pulse, Pulse])]);
-const ButtonNoteList = toSortedList(ButtonNote);
+const ButtonNoteList = SortedList(ButtonNote);
 
 export const LaserSection = z.tuple([Pulse, GraphSectionPointList, z.coerce.number().finite().positive().default(1)]);
-const LaserSectionList = toSortedList(LaserSection);
+const LaserSectionList = SortedList(LaserSection);
 
 export const NoteInfo = z.object({
     bt: z.tuple([ButtonNoteList, ButtonNoteList, ButtonNoteList, ButtonNoteList]).default([[], [], [], []]),
@@ -112,8 +119,8 @@ export const KeySoundInvokeFX = z.object({
 });
 
 export const KeySoundInvokeListFX = z.record(z.string(), z.tuple([
-    toSortedList(ByPulse(KeySoundInvokeFX)),
-    toSortedList(ByPulse(KeySoundInvokeFX)),
+    SortedList(ByPulse(KeySoundInvokeFX)),
+    SortedList(ByPulse(KeySoundInvokeFX)),
 ]));
 
 export const KeySoundFXInfo = z.object({
@@ -132,7 +139,7 @@ export const KeySoundLaserLegacyInfo = z.object({
 });
 
 export const KeySoundLaserInfo = z.object({
-    vol: toSortedList(ByPulse(z.coerce.number().finite().nonnegative())).default([[0n, 0.5]]),
+    vol: SortedList(ByPulse(z.coerce.number().finite().nonnegative())).default([[0n, 0.5]]),
     slam_event: KeySoundInvokeListLaser.default({}),
     legacy: KeySoundLaserLegacyInfo.optional(),
 });
@@ -149,13 +156,13 @@ export const AudioEffectDef = z.object({
 
 export const AudioEffectFXInfo = z.object({
     def: z.record(AudioEffectDef).default({}),
-    param_change: z.record(z.record(toSortedList(ByPulse(z.string())))).default({}),
+    param_change: z.record(z.record(SortedList(ByPulse(z.string())))).default({}),
     // TODO: long_event
 });
 
 export const AudioEffectLaserInfo = z.object({
     def: z.record(AudioEffectDef).default({}),
-    param_change: z.record(z.record(toSortedList(ByPulse(z.string())))).default({}),
+    param_change: z.record(z.record(SortedList(ByPulse(z.string())))).default({}),
     pulse_event: z.record(z.array(Pulse)).default({}),
     peaking_filter_delay: z.coerce.number().finite().default(0),
 });
@@ -173,9 +180,9 @@ export const AudioInfo = z.object({
 
 /* camera */
 export const TiltInfo = z.object({
-    scale: toSortedList(ByPulse(z.coerce.number().finite())).default([[0n, 1.0]]),
-    manual: toSortedList(ByPulse(GraphSectionPointList)).default([]),
-    keep: toSortedList(ByPulse(z.coerce.boolean())).default([[0n, false]]),
+    scale: SortedList(ByPulse(z.coerce.number().finite())).default([[0n, 1.0]]),
+    manual: SortedList(ByPulse(GraphSectionPointList)).default([]),
+    keep: SortedList(ByPulse(z.coerce.boolean())).default([[0n, false]]),
 });
 
 export const CamGraphs = z.object({
@@ -198,9 +205,9 @@ export const CamPatternInvokeSwingValue = z.object({
 export const CamPatternInvokeSwing = z.tuple([Pulse, z.union([z.literal(-1), z.literal(1)]), Pulse, CamPatternInvokeSwingValue]);
 
 export const CamPatternLaserInvokeList = z.object({
-    spin: toSortedList(CamPatternInvokeSpin).default([]),
-    half_spin: toSortedList(CamPatternInvokeSpin).default([]),
-    swing: toSortedList(CamPatternInvokeSwing).default([]),
+    spin: SortedList(CamPatternInvokeSpin).default([]),
+    half_spin: SortedList(CamPatternInvokeSpin).default([]),
+    swing: SortedList(CamPatternInvokeSwing).default([]),
 });
 
 export const CamPatternLaserInfo = z.object({
