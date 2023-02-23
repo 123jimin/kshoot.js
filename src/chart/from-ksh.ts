@@ -14,6 +14,7 @@ const schema = Object.freeze({
     difficulty: z.union([z.enum(['light', 'challenge', 'extended', 'infinite']).transform((v) => ksh.difficultyToInt(v)), z.string()]),
     level: z.coerce.number().int().min(1).max(20).catch(1),
     bpm: z.coerce.number().finite().positive().default(120),
+    curve_value: z.tuple([z.coerce.number().finite().min(0).max(1).default(0), z.coerce.number().finite().min(0).max(1).default(0)]),
     zoom_value: z.coerce.number().finite(),
     media_offset: z.coerce.number().finite().default(0),
     audio_volume: z.coerce.number().finite().nonnegative().default(100),
@@ -322,7 +323,13 @@ class Converter {
                         }
                     }
 
-                    last_laser[1].put([pulse - last_laser[0], [pos, pos], [0, 0]]);
+                    let curve: [number, number] = [0, 0];
+                    const curve_opt = options[`lasercurve_${i === 0 ? 'l' : 'r'}`];
+                    if(curve_opt) {
+                        curve = schema.curve_value.parse(curve_opt.split(';'));
+                    }
+
+                    last_laser[1].put([pulse - last_laser[0], [pos, pos], curve]);
                 }
 
                 if(measure_line.spin) {
