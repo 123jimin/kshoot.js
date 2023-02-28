@@ -159,11 +159,19 @@ class Converter {
                     const bg_legacy = bg.legacy ?? (bg.legacy = kson.schema.LegacyBGInfo.parse({}));
                     const value_arr = value.split(this._ksh_ver >= 167 ? ';' : '/');
                     const value_obj: {filename?: string, duration?: string, rotation?: {tilt: boolean, spin: boolean}} = {};
-                    if(value_arr.length >= 1) value_obj.filename = value_arr[0];
-                    if(value_arr.length >= 2) value_obj.duration = value_arr[1];
+                    if(value_arr.length >= 1) {
+                        value_obj.filename = value_arr[0];
+                    }
+                    if(value_arr.length >= 2) {
+                        if(Number.isFinite(parseInt(value_arr[1]))) {
+                            value_obj.duration = value_arr[1];
+                        }
+                    }
                     if(value_arr.length >= 3) {
                         const rotation_flag = parseInt(value_arr[2]);
-                        value_obj.rotation = {tilt: !!(rotation_flag & 1), spin: !!(rotation_flag & 2)};
+                        if(Number.isSafeInteger(rotation_flag)) {
+                            value_obj.rotation = {tilt: !!(rotation_flag & 1), spin: !!(rotation_flag & 2)};
+                        }
                     }
                     bg_legacy.layer = kson.schema.KSHLayerInfo.parse(value_obj);
                     break;
