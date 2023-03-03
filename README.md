@@ -1,5 +1,6 @@
 # kshoot.js
 
+![npm](https://img.shields.io/npm/v/kshoot?style=flat-square)
 ![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/123jimin/kshoot.js/build.yml?branch=main&style=flat-square)
 
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania.
