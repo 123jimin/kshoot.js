@@ -22,7 +22,7 @@ This library is currently work-in-progress with only the basic features implemen
   - [x] Comments
   - [x] Notes and lasers
   - [ ] Audio effects
-  - [ ] Camera effects
+  - [X] Camera effects
   - [ ] BG effects
 - Simple API
   - [x] Iterating each note in the chart
@@ -101,7 +101,7 @@ I want `kshoot` to have as little dependencies as possible. Some zero-dependency
 
 ```text
 $ npm ls --prod --all
-kshoot@0.0.4
+kshoot@0.2.0
 ├── sorted-btree@1.8.1
-└── zod@3.20.6
+└── zod@3.21.4
 ```

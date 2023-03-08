@@ -5,6 +5,7 @@ import * as kson from "../kson/index.js";
 import { Chart } from "./chart.js";
 import { type Rest, camelToSnake } from "../util.js";
 
+// NOTE: PULSE_MULTIPLIER is actually 1
 const PULSE_MULTIPLIER = kson.PULSES_PER_WHOLE / ksh.PULSES_PER_WHOLE;
 const LASER_SLAM_PULSES_MAX = PULSE_MULTIPLIER * ksh.LASER_SLAM_PULSES_MAX;
 

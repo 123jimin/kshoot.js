@@ -152,7 +152,7 @@ describe('ksh.Reader', function() {
             assert.deepEqual(chart.header, [{type: 'option', name: 'title', value: 'test'}], "the option line has to be read correctly");
             assert.deepEqual(chart.measures, [{
                 time_signature: [4, 4],
-                pulse: 0n, length: 192n,
+                pulse: 0n, length: 960n,
                 lines: [{}],
             }], "there should be no note");
         });
