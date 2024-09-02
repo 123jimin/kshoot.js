@@ -1,8 +1,10 @@
 {
   "name": "kshoot",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "JavaScript/TypeScript library for reading KSH and KSON charts for K-Shoot Mania",
-  "files": ["/dist"],
+  "files": [
+    "/dist"
+  ],
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "type": "module",
@@ -32,16 +34,16 @@
   },
   "homepage": "https://github.com/123jimin/kshoot.js#readme",
   "devDependencies": {
-    "@types/node": "^18.13.0",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "chai": "^4.3.7",
-    "eslint": "^8.33.0",
-    "mocha": "^10.2.0",
-    "typescript": "^4.9.5"
+    "@types/node": "^22.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.3.0",
+    "@typescript-eslint/parser": "^8.3.0",
+    "chai": "^5.1.1",
+    "eslint": "^9.9.1",
+    "mocha": "^10.7.3",
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "sorted-btree": "^1.8.1",
-    "zod": "^3.20.2"
+    "zod": "^3.23.8"
   }
 }
