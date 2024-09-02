@@ -100,8 +100,12 @@ function reportChart(chart_filename) {
 I want `kshoot` to have as little dependencies as possible. Some zero-dependency libraries are too cool to not use, though.
 
 ```text
-$ npm ls --prod --all
-kshoot@0.2.0
-├── sorted-btree@1.8.1
-└── zod@3.21.4
+$ pnpm ls --prod --depth 2
+Legend: production dependency, optional only, dev only
+
+kshoot@0.2.1 D:\Project\GitHub\kshoot.js
+
+dependencies:
+sorted-btree 1.8.1
+zod 3.23.8
 ```
