@@ -21,7 +21,7 @@ jobs:
         version: 9
         run_install: true
     - name: Install dependencies
-      run: pnpm ci
+      run: pnpm install
     - name: Build
       run: pnpm run build --if-present
     - name: Test
