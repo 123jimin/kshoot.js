@@ -9,6 +9,8 @@
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania.
 This library is focused on having a simple, modular, and intuitive codebase with little dependency.
 
+**NOTE:** This library is to be replaced by [@rhythm-gaming/kson](https://github.com/rhythm-gaming/kson), and this library will be modified to be a thin wrapper around that library.
+
 **NOTE:** Check out [kshoot-tools](https://github.com/rhythm-gaming/kshoot-tools) if you are looking for *a program or a tool* to do something with chart files.
 This library can be used to create such tools, but is not a tool by itself.
 
