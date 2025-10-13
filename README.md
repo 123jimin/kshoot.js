@@ -4,7 +4,7 @@
 ![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/123jimin/kshoot.js/build.yml?branch=main&style=flat-square)
 
 > [!CAUTION]
-> This library is currently in active development.
+> This library is currently in development.
 
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania.
 This library is focused on having a simple, modular, and intuitive codebase with little dependency.
