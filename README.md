@@ -3,15 +3,16 @@
 ![npm](https://img.shields.io/npm/v/kshoot?style=flat-square)
 ![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/123jimin/kshoot.js/build.yml?branch=main&style=flat-square)
 
+> [!CAUTION]
+> This library is currently in active development.
+
 This is JavaScript/TypeScript library for manipulating KSH and KSON chart files of K-Shoot Mania.
 This library is focused on having a simple, modular, and intuitive codebase with little dependency.
 
-**NOTE:** Check out [kshoot-tools](https://github.com/123jimin/kshoot-tools) if you are looking for *a program or a tool* to do something with chart files.
+**NOTE:** Check out [kshoot-tools](https://github.com/rhythm-gaming/kshoot-tools) if you are looking for *a program or a tool* to do something with chart files.
 This library can be used to create such tools, but is not a tool by itself.
 
 ## Progress
-
-This library is currently work-in-progress with only the basic features implemented.
 
 - KSH/KSON I/O
   - [x] Reading KSH
